@@ -167,6 +167,23 @@ public:
      */
     int DecompressUdpHeader(Ip6::UdpHeader &aUdpHeader, const uint8_t *aBuf, uint16_t aBufLength);
 
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    /**
+     * This method decompresses a LOWPAN_NHC GHC.
+     * 
+     * Note that this method supports decompression of fragmented message.
+     *
+     * @param[in]   aMessage     A reference to the IPv6 message.
+     * @param[out]  aHeader      A reference where the IPv6 header will be placed.
+     * @param[in]   aBuf         A pointer to the LOWPAN_NHC header.
+     * @param[in]   aBufLength   The number of bytes in @p aBuf.
+     *
+     * @returns The size of the compressed header in bytes or -1 if decompression fails.
+     *
+     */
+    int DecompressGhc(Message &aMessage, Ip6::Header &aHeader, const uint8_t *aBuf, uint16_t aBufLength);
+#endif
+
 private:
     enum
     {
@@ -214,6 +231,27 @@ private:
         kUdpDispatchMask = 0xf8,
         kUdpChecksum     = 1 << 2,
         kUdpPortMask     = 3 << 0,
+
+        kGhcUdpDispatch     = 0xd0,
+        kGhcUdpDispatchMask = 0xf8,
+
+        kGhcIcmpDispatch     = 0xdf,
+        kGhcIcmpDispatchMask = 0xff,
+    };
+
+    /**
+     * Next Header Compression (NHC) types.
+     */
+    enum
+    {
+        kNhcTypeUnknown = 0,
+        kNhcTypeUdp,
+        kNhcTypeExtHeader,
+        kNhcTypeIp6,
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+        kNhcTypeGhcUdp,
+        kNhcTypeGhcIcmp,
+#endif
     };
 
     int CompressExtensionHeader(Message &aMessage, uint8_t *aBuf, uint8_t &aNextHeader);
@@ -233,6 +271,8 @@ private:
     int     DecompressExtensionHeader(Message &aMessage, const uint8_t *aBuf, uint16_t aBufLength);
     int     DecompressUdpHeader(Message &aMessage, const uint8_t *aBuf, uint16_t aBufLength, uint16_t aDatagramLength);
     otError DispatchToNextHeader(uint8_t aDispatch, Ip6::IpProto &aNextHeader);
+
+    uint32_t GetNhcType(uint8_t dispatch);
 
     static otError CopyContext(const Context &aContext, Ip6::Address &aAddress);
     static otError ComputeIid(const Mac::Address &aMacAddr, const Context &aContext, Ip6::Address &aIpAddress);

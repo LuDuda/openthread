@@ -119,7 +119,15 @@ struct MessageInfo
     uint8_t mTimeSyncSeq;       ///< The time sync sequence.
     int64_t mNetworkTimeOffset; ///< The time offset to the Thread network time, in microseconds.
 #endif
-};
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    bool     mGhcEnabled : 1;       ///< Indicates that GHC compression is used.
+    uint8_t  mGhcBytesToCopy;       ///< A remaining bytes to copy in the next fragment.
+    uint16_t mGhcExtendedNa;        ///< A value of extended backreference argument NA.
+    uint16_t mGhcExtendedSa;        ///< A value of extended backreference argument SA.
+    uint16_t mGhcStartOutputOffset; ///< An offset of the first GHC output byte.
+    uint16_t mGhcIpHeaderOffset;    ///< An offset of the IPv6 header.
+#endif
+}; 
 
 /**
  * This class represents a Message buffer.
@@ -773,6 +781,105 @@ public:
      */
     uint8_t GetTimeSyncSeq(void) const { return mBuffer.mHead.mInfo.mTimeSyncSeq; }
 #endif // OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
+
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    /**
+     * This method indicates whether or not the message is decompressing using GHC.
+     *
+     * @retval TRUE   If the message is decompressing using GHC.
+     * @retval FALSE  If the message is not decompressing using GHC.
+     *`
+     */
+    bool IsGhcEnabled(void) const { return mBuffer.mHead.mInfo.mGhcEnabled; }
+
+    /**
+     * This method sets whether or not the message is currently decompressing using GHC.
+     *
+     * @param[in]  aEnabled  TRUE if the message is currently decompressing using GHC, FALSE otherwise.
+     *
+     */
+    void SetGhcEnabled(bool aEnabled) { mBuffer.mHead.mInfo.mGhcEnabled = aEnabled; }
+
+    /**
+     * This method sets the remaining bytes to copy in the next fragment.
+     *
+     * @param[in]  aBytesToCopy  The remaining bytes to copy in the next fragment.
+     *
+     */
+    void SetGhcRemainingBytesToCopy(uint8_t aBytesToCopy) { mBuffer.mHead.mInfo.mGhcBytesToCopy = aBytesToCopy; }
+
+    /**
+     * This method gets the remaining bytes to copy in the next fragment.
+     *
+     * @returns  The remaining bytes to copy in the next fragment.
+     *
+     */
+    uint8_t GetGhcRemainingBytesToCopy(void) const { return mBuffer.mHead.mInfo.mGhcBytesToCopy; }
+
+    /**
+     * This method sets the extended backreference argument NA.
+     *
+     * @param[in]  aExtendedNa  The extended backreference argument NA.
+     *
+     */
+    void SetGhcExtendedNa(uint16_t aExtendedNa) { mBuffer.mHead.mInfo.mGhcExtendedNa = aExtendedNa; }
+
+    /**
+     * This method gets the extended backreference argument NA.
+     *
+     * @returns  The extended backreference argument NA.
+     *
+     */
+    uint16_t GetGhcExtendedNa(void) const { return mBuffer.mHead.mInfo.mGhcExtendedNa; }
+
+    /**
+     * This method sets the extended backreference argument SA.
+     *
+     * @param[in]  aExtendedSa  The extended backreference argument SA.
+     *
+     */
+    void SetGhcExtendedSa(uint16_t aExtendedSa) { mBuffer.mHead.mInfo.mGhcExtendedSa = aExtendedSa; }
+
+    /**
+     * This method gets the extended backreference argument SA.
+     *
+     * @returns  The extended backreference argument SA.
+     *
+     */
+    uint16_t GetGhcExtendedSa(void) const { return mBuffer.mHead.mInfo.mGhcExtendedSa; }
+
+    /**
+     * This method sets the offset of the first GHC output byte.
+     *
+     * @param[in]  aStartOffset  The offset of the first GHC output byte.
+     *
+     */
+    void SetGhcStartOutputOffset(uint16_t aStartOffset) { mBuffer.mHead.mInfo.mGhcStartOutputOffset = aStartOffset; }
+
+    /**
+     * This method gets the offset of the first GHC output byte.
+     *
+     * @returns  The offset of the first GHC output byte.
+     *
+     */
+    uint16_t GetGhcStartOutputOffset(void) const { return mBuffer.mHead.mInfo.mGhcStartOutputOffset; }
+
+    /**
+     * This method sets the offset of the IPv6 header from which addresses are taken in decompression algorithm.
+     *
+     * @param[in]  aOffset  The offset of the IPv6 header from which addresses are taken in decompression algorithm.
+     *
+     */
+    void SetGhcIpHeaderOffset(uint16_t aOffset) { mBuffer.mHead.mInfo.mGhcIpHeaderOffset = aOffset; }
+
+    /**
+     * This method gets the offset of the IPv6 header from which addresses are taken in decompression algorithm.
+     *
+     * @returns  The offset of the IPv6 header from which addresses are taken in decompression algorithm.
+     *
+     */
+    uint16_t GetGhcIpHeaderOffset(void) const { return mBuffer.mHead.mInfo.mGhcIpHeaderOffset; }
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
 
 private:
     /**

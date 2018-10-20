@@ -400,6 +400,31 @@
 #endif
 
 /**
+ * @def OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+ *
+ * Define as 1 to enable Generic Header Compression as defined in RFC7400.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+#define OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC 0
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_6LOWPAN_DISABLE_GHC_ON_ICMP_ECHO
+ *
+ * Define as 1 to disable Generic Header Compression as defined in RFC7400 for
+ * ICMPv6 Echo Request and Response messages. This ensures that those ICMPv6
+ * informational messages are transmitted with targeted length.
+ * 
+ * Note that this define has effect only when OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+ * is set.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_6LOWPAN_DISABLE_GHC_ON_ICMP_ECHO
+#define OPENTHREAD_CONFIG_6LOWPAN_DISABLE_GHC_ON_ICMP_ECHO 0
+#endif
+
+/**
  * @def OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRIES
  *
  * The number of MPL Seed Set entries for duplicate detection.

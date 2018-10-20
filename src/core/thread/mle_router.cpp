@@ -1580,6 +1580,9 @@ otError MleRouter::HandleParentRequest(const Message &aMessage, const Ip6::Messa
 #if OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
     TimeRequestTlv timeRequest;
 #endif
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    GhcRequestTlv ghcRequest;
+#endif
 
     LogMleMessage("Receive Parent Request", aMessageInfo.GetPeerAddr());
 
@@ -1658,6 +1661,16 @@ otError MleRouter::HandleParentRequest(const Message &aMessage, const Ip6::Messa
         else
         {
             child->SetTimeSyncEnabled(false);
+        }
+#endif
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+        if (Tlv::GetTlv(aMessage, Tlv::kGhcRequest, sizeof(ghcRequest), ghcRequest) == OT_ERROR_NONE)
+        {
+            child->SetGhcEnabled(true);
+        }
+        else
+        {
+            child->SetGhcEnabled(false);
         }
 #endif
     }

@@ -1404,7 +1404,22 @@ void MeshForwarder::HandleFragment(uint8_t *               aFrame,
 
         VerifyOrExit(message != NULL, error = OT_ERROR_DROP);
 
-        // copy Fragment
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+        if (message->IsGhcEnabled())
+        {
+            Ip6::Header header;
+
+            SuccessOrExit(error = header.Init(*message, message->GetGhcIpHeaderOffset()));
+
+            headerLength = netif.GetLowpan().DecompressGhc(*message, header, aFrame, aFrameLength);
+            VerifyOrExit(headerLength > 0, error = OT_ERROR_PARSE);
+
+            aFrame += headerLength;
+            aFrameLength -= static_cast<uint8_t>(headerLength);
+        }
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+
+        // copy uncompressed fragment
         message->Write(message->GetOffset(), aFrameLength, aFrame);
         message->MoveOffset(aFrameLength);
         message->AddRss(aLinkInfo.mRss);

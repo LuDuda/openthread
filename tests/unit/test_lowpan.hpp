@@ -193,6 +193,14 @@ public:
     }
 
     /**
+     * This method allows to indicate that IPHC contains GHC payload.
+     *
+     * @param aEnabled  TRUE if GHC is enabled, FALSE otherwise.
+     *
+     */
+    void SetGhcEnabled(bool aEnabled) { mIsGhc = aEnabled; };
+
+    /**
      * This method sets the expect result of the compression / decompression procedure.
      *
      * @param aError  Expected result.
@@ -266,6 +274,7 @@ public:
     uint16_t        mPayloadOffset;
     Lowpan::Context mSrcContext;
     Lowpan::Context mDstContext;
+    bool            mIsGhc;
 
     /**
      * General purpose fields.

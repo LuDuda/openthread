@@ -1363,6 +1363,19 @@ protected:
     otError AppendXtalAccuracy(Message &aMessage);
 #endif // OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
 
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    /**
+     * This method appends a GHC Request TLV to a message.
+     *
+     * @param[in]  aMessage  A reference to the message.
+     *
+     * @retval OT_ERROR_NONE     Successfully appended the GHC Request TLV.
+     * @retval OT_ERROR_NO_BUFS  Insufficient buffers available to append the GHC Request TLV.
+     *
+     */
+    otError AppendGhcRequest(Message &aMessage);
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+
     /**
      * This method appends a Active Timestamp TLV to a message.
      *

@@ -109,6 +109,13 @@ public:
         kDiscovery           = 26, ///< Thread Discovery TLV
 
         /**
+         * Applicable only when GHC (`OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC`)
+         * is enabled.
+         *
+         */
+        kGhcRequest = 251, ///< GHC Request TLV
+
+        /**
          * Applicable/Required only when time synchronization service
          * (`OPENTHREAD_CONFIG_ENABLE_TIME_SYNC`) is enabled.
          *
@@ -1988,6 +1995,36 @@ private:
     uint16_t mXtalAccuracy;
 } OT_TOOL_PACKED_END;
 #endif // OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
+
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+/**
+ * This class implements Time Request TLV generation and parsing.
+ *
+ */
+OT_TOOL_PACKED_BEGIN
+class GhcRequestTlv : public Tlv
+{
+public:
+    /**
+     * This method initializes the TLV.
+     *
+     */
+    void Init(void)
+    {
+        SetType(kGhcRequest);
+        SetLength(sizeof(*this) - sizeof(Tlv));
+    }
+
+    /**
+     * This method indicates whether or not the TLV appears to be well-formed.
+     *
+     * @retval TRUE   If the TLV appears to be well-formed.
+     * @retval FALSE  If the TLV does not appear to be well-formed.
+     *
+     */
+    bool IsValid(void) const { return GetLength() == sizeof(*this) - sizeof(Tlv); }
+} OT_TOOL_PACKED_END;
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
 
 /**
  * This class implements Active Timestamp TLV generation and parsing.

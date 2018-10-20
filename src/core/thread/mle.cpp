@@ -1397,6 +1397,17 @@ otError Mle::AppendXtalAccuracy(Message &aMessage)
 }
 #endif // OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
 
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+otError Mle::AppendGhcRequest(Message &aMessage)
+{
+    GhcRequestTlv tlv;
+
+    tlv.Init();
+
+    return aMessage.Append(&tlv, sizeof(tlv));
+}
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+
 otError Mle::AppendActiveTimestamp(Message &aMessage)
 {
     ThreadNetif &             netif = GetNetif();
@@ -1904,6 +1915,9 @@ otError Mle::SendParentRequest(ParentRequestType aType)
     SuccessOrExit(error = AppendVersion(*message));
 #if OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
     SuccessOrExit(error = AppendTimeRequest(*message));
+#endif
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    SuccessOrExit(error = AppendGhcRequest(*message));
 #endif
 
     memset(&destination, 0, sizeof(destination));
@@ -3089,6 +3103,9 @@ otError Mle::HandleParentResponse(const Message &aMessage, const Ip6::MessageInf
 #if OPENTHREAD_CONFIG_ENABLE_TIME_SYNC
     TimeParameterTlv timeParameter;
 #endif
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    GhcRequestTlv ghcRequest;
+#endif
 
     // Source Address
     SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kSourceAddress, sizeof(sourceAddress), sourceAddress));
@@ -3252,6 +3269,17 @@ otError Mle::HandleParentResponse(const Message &aMessage, const Ip6::MessageInf
     mParentCandidate.SetLinkQualityOut(LinkQualityInfo::ConvertLinkMarginToLinkQuality(linkMarginTlv.GetLinkMargin()));
     mParentCandidate.SetState(Neighbor::kStateParentResponse);
     mParentCandidate.SetKeySequence(aKeySequence);
+
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    if (Tlv::GetTlv(aMessage, Tlv::kGhcRequest, sizeof(ghcRequest), ghcRequest) == OT_ERROR_NONE)
+    {
+        mParentCandidate.SetGhcEnabled(true);
+    }
+    else
+    {
+        mParentCandidate.SetGhcEnabled(false);
+    }
+#endif
 
     mParentPriority     = connectivity.GetParentPriority();
     mParentLinkQuality3 = connectivity.GetLinkQuality3();

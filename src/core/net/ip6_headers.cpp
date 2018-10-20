@@ -38,13 +38,13 @@
 namespace ot {
 namespace Ip6 {
 
-otError Header::Init(const Message &aMessage)
+otError Header::Init(const Message &aMessage, uint16_t aOffset)
 {
     otError  error = OT_ERROR_NONE;
     uint16_t length;
 
     // check aMessage length
-    VerifyOrExit(aMessage.Read(0, sizeof(*this), this) == sizeof(*this), error = OT_ERROR_PARSE);
+    VerifyOrExit(aMessage.Read(aOffset, sizeof(*this), this) == sizeof(*this), error = OT_ERROR_PARSE);
 
     // check Version
     VerifyOrExit(IsVersion6(), error = OT_ERROR_PARSE);

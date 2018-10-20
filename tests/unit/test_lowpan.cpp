@@ -44,9 +44,13 @@ Lowpan::Lowpan *sLowpan;
 void TestIphcVector::GetCompressedStream(uint8_t *aIphc, uint16_t &aIphcLength)
 {
     memcpy(aIphc, mIphcHeader.mData, mIphcHeader.mLength);
-    memcpy(aIphc + mIphcHeader.mLength, mPayload.mData, mPayload.mLength);
+    aIphcLength = mIphcHeader.mLength;
 
-    aIphcLength = mIphcHeader.mLength + mPayload.mLength;
+    if (!mIsGhc)
+    {
+        memcpy(aIphc + mIphcHeader.mLength, mPayload.mData, mPayload.mLength);
+        aIphcLength += mPayload.mLength;
+    }
 }
 
 void TestIphcVector::GetUncompressedStream(uint8_t *aIp6, uint16_t &aIp6Length)
@@ -100,7 +104,7 @@ void TestIphcVector::GetUncompressedStream(Message &aMessage)
                       "6lo: Message::Append failed");
     }
 
-    SuccessOrQuit(aMessage.Append(mPayload.mData, mPayload.mLength), "6lo: Message::Append failed5");
+    SuccessOrQuit(aMessage.Append(mPayload.mData, mPayload.mLength), "6lo: Message::Append failed");
 }
 
 /**
@@ -144,7 +148,7 @@ static void Init()
  *       e.g. doesn't use LOWPAN_NHC for UDP - which is still valid.
  *
  * @param aVector     Test vector that has to be tested.
- * @param aCompress   Set to TRUE, if compression should be tested.
+ * @param aCompress   Set to TRUE, if compression should be tested.decompressedBytes
  * @param aDecompress Set to TRUE, if decomrpession should be tested.
  */
 static void Test(TestIphcVector &aVector, bool aCompress, bool aDecompress)
@@ -159,6 +163,8 @@ static void Test(TestIphcVector &aVector, bool aCompress, bool aDecompress)
     aVector.GetCompressedStream(iphc, iphcLength);
     aVector.GetUncompressedStream(ip6, ip6Length);
 
+    
+
     printf("\n=== Test name: %s ===\n\n", aVector.mTestName);
 
     printf("Expected error -------------- %s\n", aVector.mError ? "yes" : "no");
@@ -166,6 +172,7 @@ static void Test(TestIphcVector &aVector, bool aCompress, bool aDecompress)
     printf("Extension Headers present --- %s\n", aVector.mExtHeader.mLength ? "yes" : "no");
     printf("IP-in-IP present ------------ %s\n", aVector.mIpTunneledHeader.GetPayloadLength() ? "yes" : "no");
     printf("LOWPAN_IPHC length ---------- %d\n", aVector.mIphcHeader.mLength);
+    printf("LOWPAN GHC enabled ---------- %s\n", aVector.mIsGhc ? "yes" : "no");
     printf("IPv6 uncompressed offset ---- %d\n\n", aVector.mPayloadOffset);
 
     printf("Expected IPv6 uncompressed packet: \n");
@@ -219,6 +226,8 @@ static void Test(TestIphcVector &aVector, bool aCompress, bool aDecompress)
 
         if (aVector.mError == OT_ERROR_NONE)
         {
+            VerifyOrQuit(decompressedBytes > 0, "6lo: Lowpan::Decompression failed");
+
             // Append payload to the IPv6 Packet.
             memcpy(result + message->GetLength(), iphc + decompressedBytes,
                    iphcLength - static_cast<uint16_t>(decompressedBytes));
@@ -227,14 +236,14 @@ static void Test(TestIphcVector &aVector, bool aCompress, bool aDecompress)
             otTestPrintHex(result, message->GetLength() + iphcLength - decompressedBytes);
             printf("\n");
 
-            VerifyOrQuit(decompressedBytes == aVector.mIphcHeader.mLength, "6lo: Lowpan::Decompress failed");
-            VerifyOrQuit(message->GetOffset() == aVector.mPayloadOffset, "6lo: Lowpan::Decompress failed");
-            VerifyOrQuit(message->GetOffset() == message->GetLength(), "6lo: Lowpan::Decompress failed");
-            VerifyOrQuit(memcmp(ip6, result, ip6Length) == 0, "6lo: Lowpan::Decompress failed");
+            VerifyOrQuit(decompressedBytes == aVector.mIphcHeader.mLength, "6lo: Lowpan::Decompression failed");
+            VerifyOrQuit(message->GetOffset() == aVector.mPayloadOffset, "6lo: Lowpan::Decompression failed");
+            VerifyOrQuit(message->GetOffset() == message->GetLength(), "6lo: Lowpan::Decompression failed");
+            VerifyOrQuit(memcmp(ip6, result, ip6Length) == 0, "6lo: Lowpan::Decompression failed");
         }
         else
         {
-            VerifyOrQuit(decompressedBytes < 0, "6lo: Lowpan::Decompress failed");
+            VerifyOrQuit(decompressedBytes < 0, "6lo: Lowpan::Decompression failed");
         }
 
         message->Free();
@@ -1743,6 +1752,417 @@ static void TestErrorReservedNhc6(void)
     Test(testVector, false, true);
 }
 
+static void TestGhcRfcExampleIcmpRplSimple(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - simple RPL example - RFC7400 1/10");
+
+    uint8_t payload[] = {0x9b, 0x00, 0x6b, 0xde, 0x00, 0x00, 0x00, 0x00};
+
+    // Setup MAC addresses.
+    testVector.SetMacSource(sTestMacSourceDefaultLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 64, "fe80::200:5eef:1022:1100",
+                           "fe80::200:5eef:10aa:bbcc");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7e, 0x33, 0xdf, 0x04, 0x9b, 0x00, 0x6b, 0xde, 0x82};
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(48);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpRplLong(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - longer RPL example - RFC7400 2/10");
+
+    uint8_t payload[] = {0x9b, 0x01, 0x7a, 0x5f, 0x00, 0xf0, 0x01, 0x00,
+                         0x88, 0x00, 0x00, 0x00, 0x20, 0x02, 0x0d, 0xb8,
+                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+                         0xfe, 0x00, 0xfa, 0xce, 0x04, 0x0e, 0x00, 0x14,
+                         0x09, 0xff, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x00, 0x00, 0x08, 0x1e, 0x80, 0x20,
+                         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                         0x00, 0x00, 0x00, 0x00, 0x20, 0x02, 0x0d, 0xb8,
+                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+                         0xfe, 0x00, 0xfa, 0xce, 0x03, 0x0e, 0x40, 0x00,
+                         0xff, 0xff, 0xff, 0xff, 0x20, 0x02, 0x0d, 0xb8,
+                         0x00, 0x00, 0x00, 0x00};
+
+    // Setup MAC addresses.
+    const uint8_t macSourceLong[] = {0x00, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x30, 0x23};
+    
+    testVector.SetMacSource(macSourceLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 64, "fe80::21c:daff:fe00:3023",
+                           "ff02::1a");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7e, 0x3b, 0x1a, 0xdf, 0x06, 0x9b, 0x01, 0x7a,
+                      0x5f, 0x00, 0xf0, 0xc7, 0x01, 0x88, 0x81, 0x04,
+                      0x20, 0x02, 0x0d, 0xb8, 0x85, 0xa7, 0xc9, 0x08,
+                      0xfa, 0xce, 0x04, 0x0e, 0x00, 0x14, 0x09, 0xff,
+                      0xa4, 0xda, 0x83, 0x06, 0x08, 0x1e, 0x80, 0x20,
+                      0xff, 0xff, 0xc0, 0xd0, 0x82, 0xb4, 0xf0, 0x03,
+                      0x03, 0x0e, 0x40, 0xc7, 0xa3, 0xc9, 0xa2, 0xf0};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(132);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpRplDad(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - RPL DAD Message - RFC7400 3/10");
+
+    uint8_t payload[] = {0x9b, 0x02, 0x58, 0x7d, 0x01, 0x80, 0x00, 0xf1,
+                         0x05, 0x12, 0x00, 0x80, 0x20, 0x02, 0x0d, 0xb8,
+                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+                         0xfe, 0x00, 0x33, 0x44, 0x06, 0x14, 0x00, 0x80,
+                         0xf1, 0x00, 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xfe, 0x00,
+                         0x11, 0x22};
+
+    // Setup MAC addresses.
+    testVector.SetMacSource(sTestMacSourceDefaultShort);
+    testVector.SetMacDestination(sTestMacDestinationDefaultShort);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 255, "2002:db8::00ff:fe00:3344",
+                           "2002:db8::00ff:fe00:1122");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7f, 0x00, 0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xfe, 0x00,
+                      0x33, 0x44, 0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xfe, 0x00,
+                      0x11, 0x22, 0xdf, 0x0c, 0x9b, 0x02, 0x58, 0x7d,
+                      0x01, 0x80, 0x00, 0xf1, 0x05, 0x12, 0x00, 0x80,
+                      0xb5, 0xf4, 0x08, 0x06, 0x14, 0x00, 0x80, 0xf1,
+                      0x00, 0xfe, 0x80, 0x87, 0xa7, 0xdd};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(90);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpNdNs(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - ND Neighbor Solicitation - RFC7400 4/10");
+
+    uint8_t payload[] = {0x87, 0x00, 0xa7, 0x68, 0x00, 0x00, 0x00, 0x00,
+                         0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                         0x02, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x30, 0x23,
+                         0x01, 0x01, 0x3b, 0xd3, 0x00, 0x00, 0x00, 0x00,
+                         0x1f, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
+                         0x00, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x20, 0x24};
+
+    // Setup MAC addresses.
+    const uint8_t macDestinationLong[] = {0x00, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x30, 0x23};
+
+    testVector.SetMacSource(sTestMacSourceDefaultShort);
+    testVector.SetMacDestination(macDestinationLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 255, "2002:db8::ff:fe00:3bd3",
+                           "fe80::21c:daff:fe00:3023");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7f, 0x03, 0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xfe, 0x00,
+                      0x3b, 0xd3, 0xdf, 0x04, 0x87, 0x00, 0xa7, 0x68,
+                      0x82, 0xb3, 0xf0, 0x04, 0x01, 0x01, 0x3b, 0xd3,
+                      0x82, 0x02, 0x1f, 0x02, 0x83, 0x02, 0x06, 0x00,
+                      0xa2, 0xdb, 0x02, 0x20, 0x24};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(88);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpNdNa(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - ND Neighbor Advertisement - RFC7400 5/10");
+
+    uint8_t payload[] = {0x88, 0x00, 0x26, 0x6c, 0xc0, 0x00, 0x00, 0x00,
+                         0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                         0x02, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x30, 0x23,
+                         0x02, 0x01, 0xfa, 0xce, 0x00, 0x00, 0x00, 0x00,
+                         0x1f, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
+                         0x00, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x20, 0x24};
+
+    // Setup MAC addresses.
+    const uint8_t macSourceLong[] = {0x00, 0x1c, 0xda, 0xff, 0xfe, 0x00, 0x30, 0x23};
+
+    testVector.SetMacSource(macSourceLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 255, "fe80::21c:daff:fe00:3023",
+                           "2002:db8::ff:fe00:3bd3");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7f, 0x30, 0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xfe, 0x00,
+                      0x3b, 0xd3, 0xdf, 0x05, 0x88, 0x00, 0x26, 0x6c,
+                      0xc0, 0x81, 0xb5, 0xf0, 0x04, 0x02, 0x01, 0xfa,
+                      0xce, 0x82, 0x02, 0x1f, 0x02, 0x83, 0x02, 0x06,
+                      0x00, 0xa2, 0xdb, 0x02, 0x20, 0x24};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(88);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpNdRs(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - ND Router Solicitation - RFC7400 6/10");
+
+    uint8_t payload[] = {0x85, 0x00, 0x90, 0x65, 0x00, 0x00, 0x00, 0x00,
+                         0x01, 0x02, 0xac, 0xde, 0x48, 0x00, 0x00, 0x00,
+                         0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    // Setup MAC addresses.
+    const uint8_t macSourceLong[] = {0xac, 0xde, 0x48, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    testVector.SetMacSource(macSourceLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 255, "fe80::aede:4800:0:1",
+                           "ff02::02");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7f, 0x3b, 0x02, 0xdf, 0x04, 0x85, 0x00, 0x90,
+                      0x65, 0xde, 0x02, 0x02, 0xac, 0xa5, 0xeb, 0x84};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(64);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleIcmpNdRa(void)
+{
+    TestIphcVector testVector("GHC ICMPv6 - ND Router Advertisement - RFC7400 7/10");
+
+    uint8_t payload[] = {0x86, 0x00, 0x55, 0xc9, 0x40, 0x00, 0x0f, 0xa0,
+                         0x1c, 0x5a, 0x38, 0x17, 0x00, 0x00, 0x07, 0xd0, 
+                         0x01, 0x01, 0x11, 0x22, 0x00, 0x00, 0x00, 0x00,
+                         0x03, 0x04, 0x40, 0x40, 0xff, 0xff, 0xff, 0xff, 
+                         0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+                         0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 
+                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                         0x20, 0x02, 0x40, 0x10, 0x00, 0x00, 0x03, 0xe8, 
+                         0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+                         0x21, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
+                         0x20, 0x02, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x00, 0xff, 0xfe, 0x00, 0x11, 0x22};
+
+    // Setup MAC addresses.
+    const uint8_t macSourceLong[] = {0x12, 0x34, 0x00, 0xff, 0xfe, 0x00, 0x11, 0x22};
+    const uint8_t macDestinationLong[] = {0xac, 0xde, 0x48, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    testVector.SetMacSource(macSourceLong);
+    testVector.SetMacDestination(macDestinationLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload), Ip6::kProtoIcmp6, 255, "fe80::1034:00ff:fe00:1122",
+                           "fe80::aede:4800:0:1");
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7f, 0x33, 0xdf, 0x0c, 0x86, 0x00, 0x55, 0xc9,
+                      0x40, 0x00, 0x0f, 0xa0, 0x1c, 0x5a, 0x38, 0x17,
+                      0x80, 0x06, 0x07, 0xd0, 0x01, 0x01, 0x11, 0x22,
+                      0x82, 0x06, 0x03, 0x04, 0x40, 0x40, 0xff, 0xff,
+                      0xc0, 0xd0, 0x82, 0x04, 0x20, 0x02, 0x0d, 0xb8,
+                      0x8a, 0x04, 0x20, 0x02, 0x40, 0x10, 0xa4, 0xcb,
+                      0x01, 0xe8, 0xa2, 0xf0, 0x02, 0x21, 0x03, 0xa9,
+                      0xe6, 0xb3, 0xcd, 0xaf, 0xdb};
+    
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(136);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleUdpDtlsAppData(void)
+{
+    TestIphcVector testVector("GHC UDP - DTLS Application Data - RFC7400 8/10");
+
+    uint8_t payload[] = {0x17, 0xfe, 0xfd, 0x00, 0x01, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x01, 0x00, 0x1d, 0x00, 0x01, 0x00,
+                         0x00, 0x00, 0x00, 0x00, 0x01, 0x09, 0xb2, 0x0e,
+                         0x82, 0xc1, 0x6e, 0xb6, 0x96, 0xc5, 0x1f, 0x36,
+                         0x8d, 0x17, 0x61, 0xe2, 0xb5, 0xd4, 0x22, 0xd4,
+                         0xed, 0x2b};
+
+    // Setup MAC addresses.
+    testVector.SetMacSource(sTestMacSourceDefaultLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload) + 8, Ip6::kProtoUdp, 64, "fe80::200:5eef:1022:1100",
+                           "fe80::200:5eef:10aa:bbcc");
+
+    // Setup UDP header.
+    testVector.SetUDPHeader(5683, 5684, sizeof(payload) + 8, 0xbeef);
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7e, 0x33, 0xd0, 0x16, 0x33, 0x16, 0x34, 0xbe,
+                      0xef, 0xb0, 0xd1, 0x01, 0x1d, 0xf2, 0x15, 0x09,
+                      0xb2, 0x0e, 0x82, 0xc1, 0x6e, 0xb6, 0x96, 0xc5,
+                      0x1f, 0x36, 0x8d, 0x17, 0x61, 0xe2, 0xb5, 0xd4,
+                      0x22, 0xd4, 0xed, 0x2b};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(90);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleUdpDtlsAppData2(void)
+{
+    TestIphcVector testVector("GHC UDP - DTLS Application Data - RFC7400 9/10");
+
+    uint8_t payload[] = {0x17, 0xfe, 0xfd, 0x00, 0x01, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x05, 0x00, 0x16, 0x00, 0x01, 0x00,
+                         0x00, 0x00, 0x00, 0x00, 0x05, 0xae, 0xa0, 0x15,
+                         0x56, 0x67, 0x92, 0x4d, 0xff, 0x8a, 0x24, 0xe4,
+                         0xcb, 0x35, 0xb9};
+
+    // Setup MAC addresses.
+    testVector.SetMacSource(sTestMacSourceDefaultLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload) + 8, Ip6::kProtoUdp, 64, "fe80::200:5eef:1022:1100",
+                           "fe80::200:5eef:10aa:bbcc");
+
+    // Setup UDP header.
+    testVector.SetUDPHeader(5683, 5684, sizeof(payload) + 8, 0xbeef);
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7e, 0x33, 0xd0, 0x16, 0x33, 0x16, 0x34, 0xbe,
+                      0xef, 0xb0, 0xc3, 0x03, 0x05, 0x00, 0x16, 0xf2,
+                      0x0e, 0xae, 0xa0, 0x15, 0x56, 0x67, 0x92, 0x4d,
+                      0xff, 0x8a, 0x24, 0xe4, 0xcb, 0x35, 0xb9};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(83);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
+static void TestGhcRfcExampleUdpDtlsHandshake(void)
+{
+    TestIphcVector testVector("GHC UDP - DTLS Handshake - RFC7400 10/10");
+
+    uint8_t payload[] = {0x16, 0xfe, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00,
+                         0x00, 0x00, 0x00, 0x00, 0x36, 0x01, 0x00, 0x00,
+                         0x2a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                         0x2a, 0xfe, 0xfd, 0x51, 0x52, 0xed, 0x79, 0xa4,
+                         0x20, 0xc9, 0x62, 0x56, 0x11, 0x47, 0xc9, 0x39,
+                         0xee, 0x6c, 0xc0, 0xa4, 0xfe, 0xc6, 0x89, 0x2f,
+                         0x32, 0x26, 0x9a, 0x16, 0x4e, 0x31, 0x7e, 0x9f,
+                         0x20, 0x92, 0x92, 0x00, 0x00, 0x00, 0x02, 0xc0,
+                         0xa8, 0x01, 0x00};
+
+    // Setup MAC addresses.
+    testVector.SetMacSource(sTestMacSourceDefaultLong);
+    testVector.SetMacDestination(sTestMacDestinationDefaultLong);
+
+    // Setup IPv6 header.
+    testVector.SetIpHeader(0x60000000, sizeof(payload) + 8, Ip6::kProtoUdp, 64, "fe80::200:5eef:1022:1100",
+                           "fe80::200:5eef:10aa:bbcc");
+
+    // Setup UDP header.
+    testVector.SetUDPHeader(5683, 5684, sizeof(payload) + 8, 0xbeef);
+
+    // Set LOWPAN_IPHC header with GHC compressed packet.
+    uint8_t iphc[] = {0x7e, 0x33, 0xd0, 0x16, 0x33, 0x16, 0x34, 0xbe,
+                      0xef, 0xa1, 0xcd, 0x87, 0x01, 0x36, 0xa1, 0xcd,
+                      0x01, 0x2a, 0x85, 0x23, 0x2a, 0xfe, 0xfd, 0x51,
+                      0x52, 0xed, 0x79, 0xa4, 0x20, 0xc9, 0x62, 0x56,
+                      0x11, 0x47, 0xc9, 0x39, 0xee, 0x6c, 0xc0, 0xa4,
+                      0xfe, 0xc6, 0x89, 0x2f, 0x32, 0x26, 0x9a, 0x16,
+                      0x4e, 0x31, 0x7e, 0x9f, 0x20, 0x92, 0x92, 0x81,
+                      0x05, 0x02, 0xc0, 0xa8, 0x01, 0x00};
+
+    testVector.SetIphcHeader(iphc, sizeof(iphc));
+    testVector.SetGhcEnabled(true);
+
+    // Set payload and error.
+    testVector.SetPayload(payload, sizeof(payload));
+    testVector.SetPayloadOffset(115);
+    testVector.SetError(OT_ERROR_NONE);
+
+    // Perform decompression tests.
+    Test(testVector, false, true);
+}
+
 /***************************************************************************************************
  * @section Main test.
  **************************************************************************************************/
@@ -1836,6 +2256,18 @@ void TestLowpanIphc(void)
     TestErrorUnknownNhc();
     TestErrorReservedNhc5();
     TestErrorReservedNhc6();
+
+    // GHC RFC7400 example test cases.
+    TestGhcRfcExampleIcmpRplSimple();
+    TestGhcRfcExampleIcmpRplLong();
+    TestGhcRfcExampleIcmpRplDad();
+    TestGhcRfcExampleIcmpNdNs();
+    TestGhcRfcExampleIcmpNdNa();
+    TestGhcRfcExampleIcmpNdRs();
+    TestGhcRfcExampleIcmpNdRa();
+    TestGhcRfcExampleUdpDtlsAppData();
+    TestGhcRfcExampleUdpDtlsAppData2();
+    TestGhcRfcExampleUdpDtlsHandshake();
 
     testFreeInstance(sInstance);
 }

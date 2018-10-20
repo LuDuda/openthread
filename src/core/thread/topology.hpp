@@ -356,6 +356,24 @@ public:
     void SetTimeSyncEnabled(bool aEnabled) { mTimeSyncEnabled = aEnabled; }
 #endif
 
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    /**
+     * This method indicates whether or not GHC compression is enabled.
+     *
+     * @returns TRUE if GHC compression is enabled, FALSE otherwise.
+     *
+     */
+    bool IsGhcEnabled(void) const { return mGhcEnabled; }
+
+    /**
+     * This method sets whether or not GHC compression is enabled.
+     *
+     * @param[in]  aEnable  TRUE if GHC compression is enabled, FALSE otherwise.
+     *
+     */
+    void SetGhcEnabled(bool aEnabled) { mGhcEnabled = aEnabled; }
+#endif
+
 private:
     Mac::ExtAddress mMacAddr;   ///< The IEEE 802.15.4 Extended Address
     uint32_t        mLastHeard; ///< Time when last heard.
@@ -382,6 +400,9 @@ private:
     bool    mTimeSyncEnabled : 1; ///< Indicates whether or not time sync feature is enabled.
 #else
     uint8_t mLinkFailures; ///< Consecutive link failure count
+#endif
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    bool mGhcEnabled : 1; ///< Indicates whether or not GHC compression is enabled.
 #endif
     LinkQualityInfo mLinkInfo; ///< Link quality info (contains average RSS, link margin and link quality)
 };

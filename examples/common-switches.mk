@@ -75,6 +75,10 @@ ifeq ($(DNS_CLIENT),1)
 configure_OPTIONS              += --enable-dns-client
 endif
 
+ifeq ($(GHC),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC=1
+endif
+
 ifeq ($(JAM_DETECTION),1)
 configure_OPTIONS              += --enable-jam-detection
 endif

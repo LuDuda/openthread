@@ -154,12 +154,13 @@ public:
      * This method reads the IPv6 header from @p aMessage.
      *
      * @param[in]  aMessage  The IPv6 datagram.
+     * @param[in]  aMessage  An offset of @p aMessage where IPv6 header is located.
      *
      * @retval OT_ERROR_NONE   Successfully read the IPv6 header.
      * @retval OT_ERROR_PARSE  Malformed IPv6 header.
      *
      */
-    otError Init(const Message &aMessage);
+    otError Init(const Message &aMessage, uint16_t aOffset = 0);
 
     /**
      * This method indicates whether or not the IPv6 Version is set to 6.

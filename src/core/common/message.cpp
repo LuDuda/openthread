@@ -641,20 +641,24 @@ int Message::CopyTo(uint16_t aSourceOffset, uint16_t aDestinationOffset, uint16_
     uint16_t bytesCopied = 0;
     uint16_t bytesToCopy;
     uint8_t  buf[16];
+    uint16_t rval;
 
     while (aLength > 0)
     {
         bytesToCopy = (aLength < sizeof(buf)) ? aLength : sizeof(buf);
 
-        Read(aSourceOffset, bytesToCopy, buf);
-        aMessage.Write(aDestinationOffset, bytesToCopy, buf);
+        rval = Read(aSourceOffset, bytesToCopy, buf);
+        rval = aMessage.Write(aDestinationOffset, rval, buf);
+
+        bytesCopied += rval;
+        VerifyOrExit(bytesToCopy == rval);
 
         aSourceOffset += bytesToCopy;
         aDestinationOffset += bytesToCopy;
         aLength -= bytesToCopy;
-        bytesCopied += bytesToCopy;
     }
 
+exit:
     return bytesCopied;
 }
 

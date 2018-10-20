@@ -590,11 +590,58 @@ otError Lowpan::DispatchToNextHeader(uint8_t aDispatch, Ip6::IpProto &aNextHeade
         aNextHeader = Ip6::kProtoUdp;
         ExitNow();
     }
-
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    else if ((aDispatch & kGhcUdpDispatchMask) == kGhcUdpDispatch)
+    {
+        aNextHeader = Ip6::kProtoUdp;
+        ExitNow();
+    }
+    else if ((aDispatch & kGhcIcmpDispatchMask) == kGhcIcmpDispatch)
+    {
+        aNextHeader = Ip6::kProtoIcmp6;
+        ExitNow();
+    }
+#endif
     error = OT_ERROR_PARSE;
 
 exit:
     return error;
+}
+
+uint32_t Lowpan::GetNhcType(uint8_t dispatch)
+{
+    uint32_t type;
+
+    if ((dispatch & kExtHdrDispatchMask) == kExtHdrDispatch)
+    {
+        if ((dispatch & kExtHdrEidMask) == kExtHdrEidIp6)
+        {
+            ExitNow(type = kNhcTypeIp6);
+        }
+
+        ExitNow(type = kNhcTypeExtHeader);
+    }
+    else if ((dispatch & kUdpDispatchMask) == kUdpDispatch)
+    {
+        ExitNow(type = kNhcTypeUdp);
+    }
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    else if ((dispatch & kGhcUdpDispatchMask) == kGhcUdpDispatch)
+    {
+        ExitNow(type = kNhcTypeGhcUdp);
+    }
+    else if ((dispatch & kGhcIcmpDispatchMask) == kGhcIcmpDispatch)
+    {
+        ExitNow(type = kNhcTypeGhcIcmp);
+    }
+#endif
+    else
+    {
+        ExitNow(type = kNhcTypeUnknown);
+    }
+
+exit:
+    return type;
 }
 
 int Lowpan::DecompressBaseHeader(Ip6::Header &       aIp6Header,
@@ -981,8 +1028,6 @@ int Lowpan::DecompressUdpHeader(Ip6::UdpHeader &aUdpHeader, const uint8_t *aBuf,
     cur++;
     remaining--;
 
-    VerifyOrExit((udpCtl & kUdpDispatchMask) == kUdpDispatch);
-
     memset(&aUdpHeader, 0, sizeof(aUdpHeader));
 
     // source and dest ports
@@ -1064,6 +1109,139 @@ exit:
     return headerLen;
 }
 
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+int Lowpan::DecompressGhc(Message       &aMessage,
+                          Ip6::Header   &aHeader,
+                          const uint8_t *aBuf,
+                          uint16_t       aBufLength)
+{
+    int            rval = -1;
+    const uint8_t *cur  = aBuf;
+    uint8_t        backRefBuf[48] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x16, 0xfe, 0xfd, 0x17, 0xfe, 0xfd, 0x00, 0x01,
+                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
+
+    assert(aMessage.IsGhcEnabled());
+
+    memcpy(backRefBuf, aHeader.GetSource().mFields.m8, OT_IP6_ADDRESS_SIZE);
+    memcpy(backRefBuf + 16, aHeader.GetDestination().mFields.m8, OT_IP6_ADDRESS_SIZE);
+
+    if (aMessage.GetGhcRemainingBytesToCopy())
+    {
+        uint16_t bytesToCopy = aMessage.GetGhcRemainingBytesToCopy() > aBufLength ?
+                               aBufLength : aMessage.GetGhcRemainingBytesToCopy();
+
+        SuccessOrExit(aMessage.Append(aBuf, bytesToCopy));
+        SuccessOrExit(aMessage.MoveOffset(bytesToCopy));
+
+        aMessage.SetGhcRemainingBytesToCopy(aMessage.GetGhcRemainingBytesToCopy() - bytesToCopy);
+        cur += bytesToCopy;
+    }
+
+    while (cur < aBuf + aBufLength)
+    {
+        if (!(*cur & 0x80))
+        {
+            uint16_t remaining = aBufLength - (cur + 1 - aBuf);
+            uint16_t bytesToCopy = *cur > remaining ? remaining : *cur;
+
+            SuccessOrExit(aMessage.Append(cur + 1, bytesToCopy));
+            SuccessOrExit(aMessage.MoveOffset(bytesToCopy));
+
+            if (bytesToCopy < *cur)
+            {
+                aMessage.SetGhcRemainingBytesToCopy(*cur - bytesToCopy);
+            }
+
+            cur += bytesToCopy + 1;
+        }
+        else if ((*cur & 0xf0) == 0x80)
+        {
+            uint8_t zeroCount = (*cur & 0x0f) + 2;
+            uint8_t buf[16];
+
+            memset(buf, 0, sizeof(buf));
+
+            while (zeroCount)
+            {
+                uint16_t len = zeroCount > sizeof(buf) ? sizeof(buf) : zeroCount;
+
+                SuccessOrExit(aMessage.Append(buf, len));
+                SuccessOrExit(aMessage.MoveOffset(len));
+
+                zeroCount -= len;
+            }
+
+            cur += 1;
+        }
+        else if ((*cur & 0xe0) == 0xa0)
+        {
+            aMessage.SetGhcExtendedSa(aMessage.GetGhcExtendedSa() + ((*cur & 0x0f) << 3));
+            aMessage.SetGhcExtendedNa(aMessage.GetGhcExtendedNa() + ((*cur & 0x10) >> 1));
+
+            cur += 1;
+        }
+        else if ((*cur & 0xc0) == 0xc0)
+        {
+            uint16_t n                   = ((*cur & 0x38) >> 3) + aMessage.GetGhcExtendedNa() + 2;
+            uint16_t s                   = (*cur & 0x07) + aMessage.GetGhcExtendedSa() + n;
+            uint16_t currentGhcOutputLen = aMessage.GetOffset() - aMessage.GetGhcStartOutputOffset();
+            int16_t  start               = currentGhcOutputLen - s;
+
+            if (start < 0)
+            {
+                uint8_t *startAddr = backRefBuf + sizeof(backRefBuf) + start;
+                uint16_t len       = (n > abs(start)) ? abs(start) : n;
+
+                VerifyOrExit(startAddr >= backRefBuf);
+                VerifyOrExit(len <= sizeof(backRefBuf) - (startAddr - backRefBuf));
+
+                SuccessOrExit(aMessage.Append(startAddr, len));
+                SuccessOrExit(aMessage.MoveOffset(len));
+
+                n -= len;
+
+                if (n > 0)
+                {
+                    SuccessOrExit(aMessage.SetLength(aMessage.GetLength() + n));
+                    VerifyOrExit(n = aMessage.CopyTo(aMessage.GetGhcStartOutputOffset(), aMessage.GetOffset(), n, aMessage));
+                    SuccessOrExit(aMessage.MoveOffset(n));
+                }
+            }
+            else
+            {
+                SuccessOrExit(aMessage.SetLength(aMessage.GetLength() + n));
+                VerifyOrExit(n = aMessage.CopyTo(aMessage.GetOffset() - s, aMessage.GetOffset(), n, aMessage));
+                SuccessOrExit(aMessage.MoveOffset(n));
+            }
+
+            cur += 1;
+            aMessage.SetGhcExtendedSa(0);
+            aMessage.SetGhcExtendedNa(0);
+        }
+        else if (*cur == 0x90)
+        {
+            // Stop code.
+            aMessage.SetGhcEnabled(false);
+            ExitNow(rval = cur - aBuf + 1);
+        }
+        else
+        {
+            ExitNow(rval = -1);
+        }
+    }
+
+    // GHC compresses entire payload.
+    rval = aBufLength;
+
+exit:
+    return rval;
+}
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+
 int Lowpan::Decompress(Message &           aMessage,
                        const Mac::Address &aMacSource,
                        const Mac::Address &aMacDest,
@@ -1073,16 +1251,17 @@ int Lowpan::Decompress(Message &           aMessage,
 {
     otError        error = OT_ERROR_PARSE;
     Ip6::Header    ip6Header;
-    const uint8_t *cur       = aBuf;
-    uint16_t       remaining = aBufLength;
-    bool           compressed;
+    const uint8_t *cur           = aBuf;
+    uint16_t       remaining     = aBufLength;
+    bool           nhcCompressed = false;
     int            rval;
     uint16_t       ip6PayloadLength;
     uint16_t       compressedLength = 0;
     uint16_t       currentOffset    = aMessage.GetOffset();
+    uint32_t       nhcType          = kNhcTypeUnknown;
 
     VerifyOrExit(remaining >= 2);
-    VerifyOrExit((rval = DecompressBaseHeader(ip6Header, compressed, aMacSource, aMacDest, cur, remaining)) >= 0);
+    VerifyOrExit((rval = DecompressBaseHeader(ip6Header, nhcCompressed, aMacSource, aMacDest, cur, remaining)) >= 0);
 
     cur += rval;
     remaining -= rval;
@@ -1090,41 +1269,77 @@ int Lowpan::Decompress(Message &           aMessage,
     SuccessOrExit(aMessage.Append(&ip6Header, sizeof(ip6Header)));
     SuccessOrExit(aMessage.MoveOffset(sizeof(ip6Header)));
 
-    while (compressed)
+    while (nhcCompressed)
     {
+        nhcCompressed = false;
         VerifyOrExit(remaining >= 1);
 
-        if ((cur[0] & kExtHdrDispatchMask) == kExtHdrDispatch)
+        switch (nhcType = GetNhcType(*cur))
         {
-            if ((cur[0] & kExtHdrEidMask) == kExtHdrEidIp6)
-            {
-                compressed = false;
+        case kNhcTypeExtHeader:
+            nhcCompressed = (cur[0] & kExtHdrNextHeader) != 0;
+            VerifyOrExit((rval = DecompressExtensionHeader(aMessage, cur, remaining)) >= 0);
+            break;
 
-                cur++;
-                remaining--;
+        case kNhcTypeIp6:
+            cur++;
+            remaining--;
 
-                VerifyOrExit((rval = Decompress(aMessage, aMacSource, aMacDest, cur, remaining, aDatagramLength)) >= 0);
-            }
-            else
-            {
-                compressed = (cur[0] & kExtHdrNextHeader) != 0;
-                VerifyOrExit((rval = DecompressExtensionHeader(aMessage, cur, remaining)) >= 0);
-            }
-        }
-        else if ((cur[0] & kUdpDispatchMask) == kUdpDispatch)
-        {
-            compressed = false;
+            VerifyOrExit((rval = Decompress(aMessage, aMacSource, aMacDest, cur, remaining, aDatagramLength)) >= 0);
+            break;
+
+        case kNhcTypeUdp:
             VerifyOrExit((rval = DecompressUdpHeader(aMessage, cur, remaining, aDatagramLength)) >= 0);
-        }
-        else
-        {
+            break;
+
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+        case kNhcTypeGhcUdp:
+            aMessage.SetGhcEnabled(true);
+            aMessage.SetGhcStartOutputOffset(aMessage.GetOffset() + sizeof(Ip6::UdpHeader));
+
+            // Decompress UDP header in the same way as NHC_UDP.
+            VerifyOrExit((rval = DecompressUdpHeader(aMessage, cur, remaining, aDatagramLength)) >= 0);
+            break;
+
+        case kNhcTypeGhcIcmp:
+            aMessage.SetGhcEnabled(true);
+            aMessage.SetGhcStartOutputOffset(aMessage.GetOffset());
+            rval = 1;
+            break;
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+
+        default:
             ExitNow();
+            break;
         }
 
         VerifyOrExit(remaining >= rval);
         cur += rval;
         remaining -= rval;
     }
+
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    if (aMessage.IsGhcEnabled())
+    {
+        VerifyOrExit((rval = DecompressGhc(aMessage, ip6Header, cur, remaining)) >= 0);
+
+        VerifyOrExit(remaining >= rval);
+        cur += rval;
+        remaining -= rval;
+
+        aMessage.SetGhcIpHeaderOffset(currentOffset);
+
+        // UDP length can be calculated only after GHC decompression if datagram length is unknown.
+        if (nhcType == kNhcTypeGhcUdp && aDatagramLength == 0)
+        {
+            uint16_t udpLength = HostSwap16(sizeof(Ip6::UdpHeader) + aMessage.GetOffset() -
+                                            aMessage.GetGhcStartOutputOffset() + remaining);
+
+            aMessage.Write(aMessage.GetGhcStartOutputOffset() - sizeof(Ip6::UdpHeader) +
+                           Ip6::UdpHeader::GetLengthOffset(), sizeof(udpLength), &udpLength);
+        }
+    }
+#endif // OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
 
     compressedLength = static_cast<uint16_t>(cur - aBuf);
 

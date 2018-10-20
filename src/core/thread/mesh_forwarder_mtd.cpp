@@ -46,6 +46,12 @@ otError MeshForwarder::SendMessage(Message &aMessage)
     aMessage.SetDirectTransmission();
     aMessage.SetOffset(0);
     aMessage.SetDatagramTag(0);
+#if OPENTHREAD_CONFIG_6LOWPAN_ENABLE_GHC
+    if (xxxx)
+    {
+        aMessage.SetGhcEnabled(true);
+    }
+#endif
 
     SuccessOrExit(error = mSendQueue.Enqueue(aMessage));
     mScheduleTransmissionTask.Post();
