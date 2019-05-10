@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -29,54 +29,69 @@
 /**
  * @file
  * @brief
- *   This file includes the platform abstraction for random number generation.
+ *   This file includes the platform abstraction for entropy generation.
  */
 
-#ifndef OPENTHREAD_PLATFORM_RANDOM_H_
-#define OPENTHREAD_PLATFORM_RANDOM_H_
-
-#include <stdint.h>
+#ifndef OPENTHREAD_PLATFORM_ENTROPY_H_
+#define OPENTHREAD_PLATFORM_ENTROPY_H_
 
 #include <openthread/error.h>
+
+#ifndef OPENTHREAD_RADIO
+
+#include <mbedtls/entropy.h>
+
+#endif // OPENTHREAD_RADIO
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @addtogroup plat-random
+ * @addtogroup plat-entropy
  *
  * @brief
- *   This module includes the platform abstraction for random number generation.
+ *   This module includes the platform abstraction for entropy generation.
  *
  * @{
  *
  */
 
 /**
- * Get a 32-bit random value.
- *
- * This function may be implemented using a pseudo-random number generator.
- *
- * @returns A 32-bit random value.
+ * Init platform entropy module.
  *
  */
-uint32_t otPlatRandomGet(void);
+void otPlatEntropyInit(void);
 
 /**
- * Get true random value sequence.
- *
- * This function MUST be implemented using a true random number generator (TRNG).
- *
- * @param[out]  aOutput              A pointer to where the true random values are placed.  Must not be NULL.
- * @param[in]   aOutputLength        Size of @p aBuffer.
- *
- * @retval OT_ERROR_NONE          Successfully filled @p aBuffer with true random values.
- * @retval OT_ERROR_FAILED         Failed to fill @p aBuffer with true random values.
- * @retval OT_ERROR_INVALID_ARGS  @p aBuffer was set to NULL.
+ * Deinit platform entropy module.
  *
  */
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength);
+void otPlatEntropyDeinit(void);
+
+#ifndef OPENTHREAD_RADIO
+
+/**
+ * Get MbedTls entropy context.
+ *
+ * The context should be initialized and sourced.
+ *
+ * @returns Pointer to MbedTls entropy context.
+ *
+ */
+mbedtls_entropy_context *otPlatEntropyMbedTlsContextGet(void);
+
+#endif // OPENTRHEAD_RADIO
+
+/**
+ * This function generates and returns a 32 bit entropy.
+ * 
+ * @param aVal[out]  A generated 32 bit entropy value.
+ * 
+ * @retval OT_ERROR_NONE    Successfully generated 32 bit entropy.
+ *
+ */
+otError otPlatEntropyGetUint32(uint32_t *aVal);
 
 /**
  * @}
@@ -87,4 +102,4 @@ otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength);
 } // end of extern "C"
 #endif
 
-#endif // OPENTHREAD_PLATFORM_RANDOM_H_
+#endif // OPENTHREAD_PLATFORM_ENTROPY_H_

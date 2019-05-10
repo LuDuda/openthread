@@ -55,8 +55,8 @@ PLATFORM_SOURCES                                                                
     logging.c                                                                                        \
     misc.c                                                                                           \
     radio.c                                                                                          \
-    random.c                                                                                         \
     system.c                                                                                         \
+    trng.c                                                                                           \
     uart.c                                                                                           \
     $(NULL)
 

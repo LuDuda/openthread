@@ -43,7 +43,7 @@ PLATFORM_SOURCES                          = \
     misc.c                                  \
     logging.c                               \
     radio.c                                 \
-    random.c                                \
+    trng.c                                  \
     uart-posix.c                            \
     flash.c                                 \
     spi-stubs.c                             \

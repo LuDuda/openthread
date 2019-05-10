@@ -209,7 +209,7 @@ LOCAL_SRC_FILES                                          := \
     src/posix/platform/logging.c                            \
     src/posix/platform/misc.c                               \
     src/posix/platform/radio_spinel.cpp                     \
-    src/posix/platform/random.c                             \
+    src/posix/platform/entropy.c                               \
     src/posix/platform/settings.cpp                         \
     src/posix/platform/system.c                             \
     src/posix/platform/uart.c                               \

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,40 +28,31 @@
 
 /**
  * @file
- *   This file implements a pseudo-random number generator.
+ *   This file implements an entropy based on TRNG.
  *
  */
 
+#include <openthread/platform/entropy.h>
+
 #include "openthread-core-config.h"
-#include "platform-posix.h"
 
 #include <assert.h>
 #include <stdio.h>
 
-#include <openthread/platform/random.h>
-
 #include "code_utils.h"
+#include "platform-posix.h"
 
-static uint32_t sState = 1;
+#include <openthread/error.h>
 
-void platformRandomInit(void)
-{
-#if __SANITIZE_ADDRESS__ == 0
+#include <mbedtls/entropy.h>
+#include <mbedtls/entropy_poll.h>
 
-    otError error;
+static uint32_t                sState = 1;
+static mbedtls_entropy_context sEntropy;
 
-    error = otPlatRandomGetTrue((uint8_t *)&sState, sizeof(sState));
-    assert(error == OT_ERROR_NONE);
+#if __SANITIZE_ADDRESS__ != 0
 
-#else // __SANITIZE_ADDRESS__
-
-    // Multiplying gNodeId assures that no two nodes gets the same seed within an hour.
-    sState = (uint32_t)time(NULL) + (3600 * gNodeId);
-
-#endif // __SANITIZE_ADDRESS__
-}
-
-uint32_t otPlatRandomGet(void)
+uint32_t randomUint32Get(void)
 {
     uint32_t mlcg, p, q;
     uint64_t tmpstate;
@@ -83,7 +74,9 @@ uint32_t otPlatRandomGet(void)
     return mlcg;
 }
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+#endif // __SANITIZE_ADDRESS__
+
+static otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error = OT_ERROR_NONE;
 
@@ -121,7 +114,7 @@ exit:
 
     for (uint16_t length = 0; length < aOutputLength; length++)
     {
-        aOutput[length] = (uint8_t)otPlatRandomGet();
+        aOutput[length] = (uint8_t)randomUint32Get();
     }
 
 exit:
@@ -129,4 +122,63 @@ exit:
 #endif // __SANITIZE_ADDRESS__
 
     return error;
+}
+
+static int HandleMbedtlsEntropyPoll(void *aData, unsigned char *aOutput, size_t aInLen, size_t *aOutLen)
+{
+    OT_UNUSED_VARIABLE(aData);
+
+    otError error;
+    int     rval = 0;
+
+    error = utilsEntropyGet((uint8_t *)aOutput, (uint16_t)aInLen);
+    otEXPECT(error == OT_ERROR_NONE);
+
+    if (aOutLen != NULL)
+    {
+        *aOutLen = aInLen;
+    }
+
+exit:
+
+    if (error != OT_ERROR_NONE)
+    {
+        rval = MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
+    }
+
+    return rval;
+}
+
+void platformRandomInit(void)
+{
+#if __SANITIZE_ADDRESS__ == 0
+
+    otError error;
+
+    error = utilsEntropyGet((uint8_t *)&sState, sizeof(sState));
+    assert(error == OT_ERROR_NONE);
+
+#else // __SANITIZE_ADDRESS__
+
+    // Multiplying gNodeId assures that no two nodes gets the same seed within an hour.
+    sState = (uint32_t)time(NULL) + (3600 * gNodeId);
+
+#endif // __SANITIZE_ADDRESS__
+}
+
+void otPlatEntropyInit(void)
+{
+    mbedtls_entropy_init(&sEntropy);
+    mbedtls_entropy_add_source(&sEntropy, &HandleMbedtlsEntropyPoll, NULL, MBEDTLS_ENTROPY_MIN_HARDWARE,
+                               MBEDTLS_ENTROPY_SOURCE_STRONG);
+}
+
+void otPlatEntropyDeinit(void)
+{
+    mbedtls_entropy_free(&sEntropy);
+}
+
+mbedtls_entropy_context *otPlatEntropyMbedTlsContextGet(void)
+{
+    return &sEntropy;
 }

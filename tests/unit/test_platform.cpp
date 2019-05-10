@@ -28,6 +28,8 @@
 
 #include "test_platform.h"
 
+#include <mbedtls/entropy_poll.h>
+
 #if _WIN32
 __forceinline int gettimeofday(struct timeval *tv, struct timezone *)
 {
@@ -408,16 +410,7 @@ int8_t otPlatRadioGetReceiveSensitivity(otInstance *aInstance)
 // Random
 //
 
-uint32_t otPlatRandomGet(void)
-{
-#if _WIN32
-    return (uint32_t)rand();
-#else
-    return (uint32_t)random();
-#endif
-}
-
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error = OT_ERROR_NONE;
 
@@ -425,11 +418,55 @@ otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 
     for (uint16_t length = 0; length < aOutputLength; length++)
     {
-        aOutput[length] = (uint8_t)otPlatRandomGet();
+        aOutput[length] = (uint8_t)rand();
     }
 
 exit:
     return error;
+}
+
+static mbedtls_entropy_context sEntropy;
+
+static int HandleMbedtlsEntropyPoll(void *aData, unsigned char *aOutput, size_t aInLen, size_t *aOutLen)
+{
+    OT_UNUSED_VARIABLE(aData);
+
+    otError error;
+    int     rval = 0;
+
+    error = utilsEntropyGet((uint8_t *)aOutput, (uint16_t)aInLen);
+    SuccessOrExit(error);
+
+    if (aOutLen != NULL)
+    {
+        *aOutLen = aInLen;
+    }
+
+exit:
+
+    if (error != OT_ERROR_NONE)
+    {
+        rval = MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
+    }
+
+    return rval;
+}
+
+void otPlatEntropyInit(void)
+{
+    mbedtls_entropy_init(&sEntropy);
+    mbedtls_entropy_add_source(&sEntropy, &HandleMbedtlsEntropyPoll, NULL, MBEDTLS_ENTROPY_MIN_HARDWARE,
+                               MBEDTLS_ENTROPY_SOURCE_STRONG);
+}
+
+void otPlatEntropyDeinit(void)
+{
+    mbedtls_entropy_free(&sEntropy);
+}
+
+mbedtls_entropy_context *otPlatEntropyMbedTlsContextGet(void)
+{
+    return &sEntropy;
 }
 
 //

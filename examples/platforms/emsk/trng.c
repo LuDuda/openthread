@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016-2017, The OpenThread Authors.
+ *  Copyright (c) 2017, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -30,100 +30,84 @@
  * @file
  *   This file implements a pseudo-random number generator.
  *
+ * @warning
+ *   This implementation is not a true random number generator and does @em satisfy the Thread requirements.
+ *
  */
 
-#include <assert.h>
+#include <utils/code_utils.h>
+
+#include "platform-emsk.h"
+#include "openthread/platform/radio.h"
+
+#include <stdlib.h>
+
 #include <stdio.h>
 
-#include <openthread/error.h>
-#include <openthread/platform/random.h>
+static unsigned int seed;
 
-#include "utils/code_utils.h"
-
-static uint32_t sState = 1;
-
-void qorvoRandomInit(void)
+void emskRandomInit(void)
 {
-#if __SANITIZE_ADDRESS__ == 0
+    unsigned int i;
 
-    otError error;
-
-    error = otPlatRandomGetTrue((uint8_t *)&sState, sizeof(sState));
-    assert(error == OT_ERROR_NONE);
-
-#else // __SANITIZE_ADDRESS__
-
-    sState = (uint32_t)time(NULL);
-
-#endif // __SANITIZE_ADDRESS__
+    printf("Node No.:");
+    scanf("%d", &i);
+    printf("%d\n", i);
+    seed = 10 + i;
+    srand(seed);
 }
 
-uint32_t otPlatRandomGet(void)
+static uint32_t randomUint32Get(void)
 {
-    uint32_t mlcg, p, q;
-    uint64_t tmpstate;
-
-    tmpstate = (uint64_t)33614 * (uint64_t)sState;
-    q        = tmpstate & 0xffffffff;
-    q        = q >> 1;
-    p        = tmpstate >> 32;
-    mlcg     = p + q;
-
-    if (mlcg & 0x80000000)
-    {
-        mlcg &= 0x7fffffff;
-        mlcg++;
-    }
-
-    sState = mlcg;
-
-    return mlcg;
+    return (uint32_t)rand();
 }
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
-    otError error = OT_ERROR_NONE;
-
-#if __SANITIZE_ADDRESS__ == 0
-
-    FILE * file = NULL;
-    size_t readLength;
+    otError     error     = OT_ERROR_NONE;
+    uint8_t     channel   = 0;
+    otInstance *aInstance = NULL;
 
     otEXPECT_ACTION(aOutput && aOutputLength, error = OT_ERROR_INVALID_ARGS);
 
-    file = fopen("/dev/urandom", "rb");
-    otEXPECT_ACTION(file != NULL, error = OT_ERROR_FAILED);
+    // TODO: `utilsEntropyGet()` should include a pointer to the
+    // owning OpenThread Instance as an input argument (similar to other platform APIs).
+    //
+    // The platform implementation requires to know the OpenThread instance to be able to
+    // use other radio platform APIs. However, the emsk platform implementation of radio API
+    // does not actually use the passed-in instance argument. Till the above TODO is done, as
+    // a workaround, a NULL `aInstance` is used instead.
 
-    readLength = fread(aOutput, 1, aOutputLength, file);
-    otEXPECT_ACTION(readLength == aOutputLength, error = OT_ERROR_FAILED);
-
-exit:
-
-    if (file != NULL)
+    /* disable radio*/
+    if (otPlatRadioIsEnabled(aInstance))
     {
-        fclose(file);
+        channel = (mrf24j40_read_long_ctrl_reg(MRF24J40_RFCON0) >> 4) + 11;
+        otPlatRadioSleep(aInstance);
+        otPlatRadioDisable(aInstance);
     }
-
-#else // __SANITIZE_ADDRESS__
 
     /*
      * THE IMPLEMENTATION BELOW IS NOT COMPLIANT WITH THE THREAD SPECIFICATION.
      *
-     * Address Sanitizer triggers test failures when reading random
-     * values from /dev/urandom.  The pseudo-random number generator
-     * implementation below is only used to enable continuous
-     * integration checks with Address Sanitizer enabled.
+     * Please see Note in `<path-to-openthread>/examples/platforms/emsk/README.md`
+     * for TRNG features on EMSK.
      */
     otEXPECT_ACTION(aOutput && aOutputLength, error = OT_ERROR_INVALID_ARGS);
 
     for (uint16_t length = 0; length < aOutputLength; length++)
     {
-        aOutput[length] = (uint8_t)otPlatRandomGet();
+        /* Get random number */
+        aOutput[length] = (uint8_t)randomUint32Get();
+    }
+
+    /* Enable radio*/
+    if (channel)
+    {
+        emskRadioInit();
+        otPlatRadioEnable(aInstance);
+        otPlatRadioReceive(aInstance, channel);
     }
 
 exit:
-
-#endif // __SANITIZE_ADDRESS__
-
     return error;
 }

@@ -167,8 +167,8 @@ Mle::Mle(Instance &aInstance)
     meshLocalPrefix.m8[7] = 0x00;
 
     // mesh-local 64
-    Random::FillBuffer(mMeshLocal64.GetAddress().mFields.m8 + OT_IP6_PREFIX_SIZE,
-                       OT_IP6_ADDRESS_SIZE - OT_IP6_PREFIX_SIZE);
+    Random::Software::FillBuffer(mMeshLocal64.GetAddress().mFields.m8 + OT_IP6_PREFIX_SIZE,
+                                 OT_IP6_ADDRESS_SIZE - OT_IP6_PREFIX_SIZE);
 
     mMeshLocal64.mPrefixLength       = 64;
     mMeshLocal64.mPreferred          = true;
@@ -668,7 +668,7 @@ uint32_t Mle::GetAttachStartDelay(void) const
 
     if (mAttachCounter == 0)
     {
-        delay = 1 + Random::GetUint32InRange(0, kParentRequestRouterTimeout);
+        delay = 1 + Random::Software::GetUint32InRange(0, kParentRequestRouterTimeout);
         ExitNow();
     }
 #if OPENTHREAD_CONFIG_ENABLE_ATTACH_BACKOFF
@@ -684,12 +684,12 @@ uint32_t Mle::GetAttachStartDelay(void) const
         }
         else
         {
-            delay = Random::AddJitter(kAttachBackoffMaxInterval, kAttachBackoffJitter);
+            delay = Random::Software::AddJitter(kAttachBackoffMaxInterval, kAttachBackoffJitter);
         }
     }
 #endif // OPENTHREAD_CONFIG_ENABLE_ATTACH_BACKOFF
 
-    jitter = Random::GetUint32InRange(0, kAttachStartJitter);
+    jitter = Random::Software::GetUint32InRange(0, kAttachStartJitter);
 
     if (jitter + delay > delay) // check for overflow
     {
@@ -1455,8 +1455,8 @@ void Mle::HandleStateChanged(otChangedFlags aFlags)
         if (!Get<ThreadNetif>().IsUnicastAddress(mMeshLocal64.GetAddress()))
         {
             // Mesh Local EID was removed, choose a new one and add it back
-            Random::FillBuffer(mMeshLocal64.GetAddress().mFields.m8 + OT_IP6_PREFIX_SIZE,
-                               OT_IP6_ADDRESS_SIZE - OT_IP6_PREFIX_SIZE);
+            Random::Software::FillBuffer(mMeshLocal64.GetAddress().mFields.m8 + OT_IP6_PREFIX_SIZE,
+                                         OT_IP6_ADDRESS_SIZE - OT_IP6_PREFIX_SIZE);
 
             Get<ThreadNetif>().AddUnicastAddress(mMeshLocal64);
             Get<Notifier>().Signal(OT_CHANGED_THREAD_ML_ADDR);
@@ -1745,7 +1745,7 @@ uint32_t Mle::Reattach(void)
             Get<MeshCoP::PendingDataset>().ApplyConfiguration();
             mReattachState = kReattachPending;
             SetAttachState(kAttachStateStart);
-            delay = 1 + Random::GetUint32InRange(0, kAttachStartJitter);
+            delay = 1 + Random::Software::GetUint32InRange(0, kAttachStartJitter);
         }
         else
         {
@@ -1900,7 +1900,7 @@ otError Mle::SendParentRequest(ParentRequestType aType)
     uint8_t      scanMask = 0;
     Ip6::Address destination;
 
-    Random::FillBuffer(mParentRequest.mChallenge, sizeof(mParentRequest.mChallenge));
+    Random::Software::FillBuffer(mParentRequest.mChallenge, sizeof(mParentRequest.mChallenge));
 
     switch (aType)
     {
@@ -2210,7 +2210,7 @@ otError Mle::SendChildUpdateRequest(void)
     switch (mRole)
     {
     case OT_DEVICE_ROLE_DETACHED:
-        Random::FillBuffer(mParentRequest.mChallenge, sizeof(mParentRequest.mChallenge));
+        Random::Software::FillBuffer(mParentRequest.mChallenge, sizeof(mParentRequest.mChallenge));
         SuccessOrExit(error = AppendChallenge(*message, mParentRequest.mChallenge, sizeof(mParentRequest.mChallenge)));
         break;
 
@@ -2831,7 +2831,7 @@ otError Mle::HandleAdvertisement(const Message &aMessage, const Ip6::MessageInfo
         if (mRetrieveNewNetworkData ||
             (static_cast<int8_t>(leaderData.GetDataVersion() - Get<NetworkData::Leader>().GetVersion()) > 0))
         {
-            delay = Random::GetUint16InRange(0, kMleMaxResponseDelay);
+            delay = Random::Software::GetUint16InRange(0, kMleMaxResponseDelay);
             SendDataRequest(aMessageInfo.GetPeerAddr(), tlvs, sizeof(tlvs), delay);
         }
     }
@@ -2999,7 +2999,7 @@ exit:
 
         if (aMessageInfo.GetSockAddr().IsMulticast())
         {
-            delay = Random::GetUint16InRange(0, kMleMaxResponseDelay);
+            delay = Random::Software::GetUint16InRange(0, kMleMaxResponseDelay);
         }
         else
         {
@@ -3984,7 +3984,7 @@ void Mle::StartParentSearchTimer(void)
 {
     uint32_t interval;
 
-    interval = Random::GetUint32InRange(0, kParentSearchJitterInterval);
+    interval = Random::Software::GetUint32InRange(0, kParentSearchJitterInterval);
 
     if (mParentSearchIsInBackoff)
     {

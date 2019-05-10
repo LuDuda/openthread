@@ -33,8 +33,6 @@
 
 #include <string.h>
 
-#include <openthread/platform/random.h>
-
 #include "platform-da15000.h"
 
 #include "hw_trng.h"
@@ -67,7 +65,7 @@ void da15000RandomInit(void)
     StartGenerator();
 }
 
-uint32_t otPlatRandomGet(void)
+static uint32_t randomUint32Get(void)
 {
     uint32_t randomNumber;
     bool     randomGet = false;
@@ -102,13 +100,13 @@ uint32_t otPlatRandomGet(void)
     return randomNumber;
 }
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     uint32_t randomNumber;
 
     while (aOutputLength)
     {
-        randomNumber = otPlatRandomGet();
+        randomNumber = randomUint32Get();
 
         if (aOutputLength < 4)
         {

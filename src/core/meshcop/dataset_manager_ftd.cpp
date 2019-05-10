@@ -38,7 +38,6 @@
 #include <stdio.h>
 
 #include <openthread/platform/radio.h>
-#include <openthread/platform/random.h>
 
 #include "coap/coap_message.hpp"
 #include "common/code_utils.hpp"
@@ -46,6 +45,7 @@
 #include "common/instance.hpp"
 #include "common/locator-getters.hpp"
 #include "common/logging.hpp"
+#include "common/random.hpp"
 #include "common/timer.hpp"
 #include "meshcop/dataset.hpp"
 #include "meshcop/dataset_manager.hpp"
@@ -415,7 +415,8 @@ otError ActiveDataset::GenerateLocal(void)
         {
             // PSKc has not yet been configured, generate new PSKc at random
             otPSKc pskc;
-            SuccessOrExit(error = otPlatRandomGetTrue(pskc.m8, sizeof(pskc)));
+
+            SuccessOrExit(error = Random::Crypto::FillBuffer(pskc.m8, sizeof(pskc)));
             tlv.SetPSKc(pskc);
         }
 

@@ -42,9 +42,9 @@ PLATFORM_SOURCES                          = \
     flash.c                                 \
     misc.c                                  \
     radio.c                                 \
-    random.c                                \
     startup-gcc.c                           \
     system.c                                \
+    trng.c                                  \
     logging.c                               \
     uart.c                                  \
     $(NULL)

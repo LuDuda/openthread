@@ -39,6 +39,7 @@ libopenthread_platform_utils_a_CPPFLAGS                 = \
 
 libopenthread_platform_utils_a_SOURCES  = \
     debug_uart.c                          \
+    entropy_trng.c                        \
     logging_rtt.c                         \
     settings_flash.c                      \
     soft_source_match_table.c             \
@@ -49,6 +50,7 @@ noinst_HEADERS                          = \
     flash.h                               \
     logging_rtt.h                         \
     soft_source_match_table.h             \
+    trng.h                                \
     $(NULL)
 
 include $(abs_top_nlbuild_autotools_dir)/automake/post.am

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,23 +28,34 @@
 
 /**
  * @file
- *   This file implements the OpenThread platform abstraction for random number generator.
- *
+ *  This file includes definitions for OpenThread random number generation manager class.
  */
 
-#include "phy.h"
-#include "platform-samr21.h"
-#include <openthread/platform/radio.h>
-#include <openthread/platform/random.h>
+#ifndef RANDOM_MANAGER_HPP_
+#define RANDOM_MANAGER_HPP_
 
-uint32_t otPlatRandomGet(void)
+namespace ot {
+
+/**
+ * This class manages random number generator initialization/deinitialization.
+ *
+ */
+class RandomManager
 {
-    return samr21RadioRandomGet();
-}
+public:
+    /**
+     * This constructor initializes the object.
+     *
+     */
+    RandomManager(void);
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
-{
-    samr21RadioRandomGetTrue(aOutput, aOutputLength);
+    /**
+     * This destructor deinitializes the object.
+     *
+     */
+    ~RandomManager(void);
+};
 
-    return OT_ERROR_NONE;
-}
+} // namespace ot
+
+#endif // RANDOM_MANAGER_HPP_

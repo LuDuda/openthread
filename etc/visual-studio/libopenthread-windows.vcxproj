@@ -60,7 +60,7 @@
     <ClCompile Include="..\..\examples\platforms\posix\logging.c" />
     <ClCompile Include="..\..\examples\platforms\posix\misc.c" />
     <ClCompile Include="..\..\examples\platforms\posix\radio.c" />
-    <ClCompile Include="..\..\examples\platforms\posix\random.c" />
+    <ClCompile Include="..\..\examples\platforms\posix\trng.c" />
     <ClCompile Include="..\..\examples\platforms\posix\spi-stubs.c" />
     <ClCompile Include="..\..\examples\platforms\posix\system.c" />
     <ClCompile Include="..\..\examples\platforms\posix\uart-windows.c" />

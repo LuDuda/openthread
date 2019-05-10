@@ -46,9 +46,9 @@ libopenthread_qpg6095_a_SOURCES             = \
     logging.c                                 \
     misc.c                                    \
     platform.c                                \
-    random.c                                  \
     radio.c                                   \
     settings.cpp                              \
+    trng.c                                    \
     uart.c                                    \
     $(NULL)
 

@@ -66,6 +66,7 @@ if OPENTHREAD_PLATFORM_POSIX_APP
 AM_CPPFLAGS                                                        += \
     -DOPENTHREAD_PLATFORM_POSIX_APP=1                                 \
     -I$(top_srcdir)/src/posix/platform                                \
+    -I$(top_srcdir)/third_party/mbedtls/repo/include                  \
     $(NULL)
 endif
 

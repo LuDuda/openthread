@@ -52,8 +52,8 @@ PLATFORM_SOURCES                                      = \
     misc.c                                              \
     logging.c                                           \
     radio.c                                             \
-    random.c                                            \
     system.c                                            \
+    trng.c                                              \
     uart.c                                              \
     crypto/sha256_alt.c                                 \
     crypto/aes_alt.c                                    \

@@ -40,7 +40,6 @@
 #include <string.h>
 
 #include <utils/code_utils.h>
-#include <openthread/platform/random.h>
 
 #include "platform-nrf5.h"
 
@@ -169,12 +168,7 @@ void nrf5RandomDeinit(void)
     NVIC_SetPriority(RNG_IRQn, 0);
 }
 
-uint32_t otPlatRandomGet(void)
-{
-    return (uint32_t)rand();
-}
-
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError  error = OT_ERROR_NONE;
     uint8_t  copyLength;

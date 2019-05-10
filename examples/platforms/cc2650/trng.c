@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2018, The OpenThread Authors.
+ *  Copyright (c) 2017, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -26,32 +26,29 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <openthread/config.h>
-
-#include <stddef.h>
-
 #include <utils/code_utils.h>
-#include <openthread/platform/random.h>
 
 #include <driverlib/prcm.h>
 #include <driverlib/trng.h>
 
+#include <mbedtls/entropy_poll.h>
+
 enum
 {
-    CC1352_TRNG_MIN_SAMPLES_PER_CYCLE = (1 << 6),
-    CC1352_TRNG_MAX_SAMPLES_PER_CYCLE = (1 << 24),
-    CC1352_TRNG_CLOCKS_PER_SAMPLE     = 0,
+    CC2650_TRNG_MIN_SAMPLES_PER_CYCLE = (1 << 6),
+    CC2650_TRNG_MAX_SAMPLES_PER_CYCLE = (1 << 24),
+    CC2650_TRNG_CLOCKS_PER_SAMPLE     = 0,
 };
 
 /**
  * \note if more than 32 bits of entropy are needed, the TRNG core produces
- * 64 bits of random data, we just ignore the upper 32 bytes
+ * 64 bytes of random data, we just ignore the upper 32 bytes
  */
 
 /**
- * Function documented in platform-cc1352.h
+ * Function documented in platform-cc2650.h
  */
-void cc1352RandomInit(void)
+void cc2650RandomInit(void)
 {
     PRCMPowerDomainOn(PRCM_DOMAIN_PERIPH);
 
@@ -62,30 +59,19 @@ void cc1352RandomInit(void)
     PRCMPeripheralSleepEnable(PRCM_DOMAIN_PERIPH);
     PRCMPeripheralDeepSleepEnable(PRCM_DOMAIN_PERIPH);
     PRCMLoadSet();
-    TRNGConfigure(CC1352_TRNG_MIN_SAMPLES_PER_CYCLE, CC1352_TRNG_MAX_SAMPLES_PER_CYCLE, CC1352_TRNG_CLOCKS_PER_SAMPLE);
+    TRNGConfigure(CC2650_TRNG_MIN_SAMPLES_PER_CYCLE, CC2650_TRNG_MAX_SAMPLES_PER_CYCLE, CC2650_TRNG_CLOCKS_PER_SAMPLE);
     TRNGEnable();
 }
 
 /**
- * Function documented in platform/random.h
- */
-uint32_t otPlatRandomGet(void)
-{
-    while (!(TRNGStatusGet() & TRNG_NUMBER_READY))
-        ;
-
-    return TRNGNumberGet(TRNG_LOW_WORD);
-}
-
-/**
- * Fill an arbitrary area with random data.
+ * Fill an arbitrary area with random data
  *
- * @param [out] aOutput Area to place the random data.
- * @param [in]  aLen    Size of the area to place random data.
- * @param [out] oLen    How much of the output was written to.
+ * @param [out] aOutput area to place the random data
+ * @param [in] aLen size of the area to place random data
+ * @param [out] oLen how much of the output was written to
  *
- * @return Indication of error.
- * @retval 0 No error occurred.
+ * @return indication of error
+ * @retval 0 no error occured
  */
 static int TRNGPoll(unsigned char *aOutput, size_t aLen)
 {
@@ -106,7 +92,7 @@ static int TRNGPoll(unsigned char *aOutput, size_t aLen)
 
             /*
              * don't use TRNGNumberGet here because it will tell the TRNG to
-             * refill the entropy pool, instead we do it ourself.
+             * refil the entropy pool, instad we do it ourself.
              */
             buffer.u32[0]                        = HWREG(TRNG_BASE + TRNG_O_OUT0);
             buffer.u32[1]                        = HWREG(TRNG_BASE + TRNG_O_OUT1);
@@ -122,16 +108,16 @@ static int TRNGPoll(unsigned char *aOutput, size_t aLen)
 }
 
 /**
- * Function documented in platform/random.h
+ * Function documented in utils/trng.h
  */
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error  = OT_ERROR_NONE;
     size_t  length = aOutputLength;
 
     otEXPECT_ACTION(aOutput, error = OT_ERROR_INVALID_ARGS);
 
-    otEXPECT_ACTION(TRNGPoll((unsigned char *)aOutput, length) == 0, error = OT_ERROR_FAILED);
+    otEXPECT_ACTION(TRNGPoll((unsigned char *)aOutput, length) != 0, error = OT_ERROR_FAILED);
 
 exit:
     return error;

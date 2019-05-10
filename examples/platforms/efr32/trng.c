@@ -32,8 +32,6 @@
  *
  */
 
-#include <openthread/platform/random.h>
-
 #include "utils/code_utils.h"
 
 #include "em_adc.h"
@@ -68,7 +66,7 @@ void efr32RandomInit(void)
     ADC0->SINGLEFIFOCLEAR = ADC_SINGLEFIFOCLEAR_SINGLEFIFOCLEAR;
 }
 
-uint32_t otPlatRandomGet(void)
+static uint32_t randomUint32Get(void)
 {
     uint8_t  tmp;
     uint32_t random = 0;
@@ -93,7 +91,7 @@ uint32_t otPlatRandomGet(void)
     return random;
 }
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error = OT_ERROR_NONE;
 
@@ -101,7 +99,7 @@ otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
 
     for (uint16_t length = 0; length < aOutputLength; length++)
     {
-        aOutput[length] = (uint8_t)otPlatRandomGet();
+        aOutput[length] = (uint8_t)randomUint32Get();
     }
 
 exit:

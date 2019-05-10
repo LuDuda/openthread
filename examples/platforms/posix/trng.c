@@ -32,12 +32,12 @@
  *
  */
 
+#include "utils/trng.h"
+
 #include <assert.h>
 #include <stdio.h>
 
 #include "platform-posix.h"
-
-#include <openthread/platform/random.h>
 
 #include "utils/code_utils.h"
 
@@ -49,7 +49,7 @@ void platformRandomInit(void)
 
     otError error;
 
-    error = otPlatRandomGetTrue((uint8_t *)&sState, sizeof(sState));
+    error = utilsEntropyGet((uint8_t *)&sState, sizeof(sState));
     assert(error == OT_ERROR_NONE);
 
 #else // __SANITIZE_ADDRESS__
@@ -60,7 +60,9 @@ void platformRandomInit(void)
 #endif // __SANITIZE_ADDRESS__
 }
 
-uint32_t otPlatRandomGet(void)
+#if __SANITIZE_ADDRESS__ != 0
+
+static uint32_t randomUint32Get(void)
 {
     uint32_t mlcg, p, q;
     uint64_t tmpstate;
@@ -82,7 +84,9 @@ uint32_t otPlatRandomGet(void)
     return mlcg;
 }
 
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+#endif // __SANITIZE_ADDRESS__
+
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error = OT_ERROR_NONE;
 
@@ -120,7 +124,7 @@ exit:
 
     for (uint16_t length = 0; length < aOutputLength; length++)
     {
-        aOutput[length] = (uint8_t)otPlatRandomGet();
+        aOutput[length] = (uint8_t)randomUint32Get();
     }
 
 exit:

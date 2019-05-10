@@ -85,11 +85,13 @@
     <ClCompile Include="..\..\src\core\coap\coap.cpp" />
     <ClCompile Include="..\..\src\core\coap\coap_message.cpp" />
     <ClCompile Include="..\..\src\core\coap\coap_secure.cpp" />
+    <ClCompile Include="..\..\src\core\common\entropy.cpp" />
     <ClCompile Include="..\..\src\core\common\crc16.cpp" />
     <ClCompile Include="..\..\src\core\common\instance.cpp" />
     <ClCompile Include="..\..\src\core\common\logging.cpp" />
     <ClCompile Include="..\..\src\core\common\message.cpp" />
     <ClCompile Include="..\..\src\core\common\notifier.cpp" />
+    <ClCompile Include="..\..\src\core\common\random.cpp" />
     <ClCompile Include="..\..\src\core\common\settings.cpp" />
     <ClCompile Include="..\..\src\core\common\string.cpp" />
     <ClCompile Include="..\..\src\core\common\tasklet.cpp" />
@@ -195,6 +197,7 @@
     <ClInclude Include="..\..\src\core\common\context.hpp" />
     <ClInclude Include="..\..\src\core\common\crc16.hpp" />
     <ClInclude Include="..\..\src\core\common\debug.hpp" />
+    <ClInclude Include="..\..\src\core\common\entropy.hpp" />
     <ClInclude Include="..\..\src\core\common\encoding.hpp" />
     <ClInclude Include="..\..\src\core\common\instance.hpp" />
     <ClInclude Include="..\..\src\core\common\locator.hpp" />
@@ -203,6 +206,7 @@
     <ClInclude Include="..\..\src\core\common\message.hpp" />
     <ClInclude Include="..\..\src\core\common\notifier.hpp" />
     <ClInclude Include="..\..\src\core\common\new.hpp" />
+    <ClInclude Include="..\..\src\core\common\random.hpp" />
     <ClInclude Include="..\..\src\core\common\string.hpp" />
     <ClInclude Include="..\..\src\core\common\tasklet.hpp" />
     <ClInclude Include="..\..\src\core\common\timer.hpp" />

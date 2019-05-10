@@ -151,7 +151,6 @@ void Instance::AfterInit(void)
 #if OPENTHREAD_MTD || OPENTHREAD_FTD
 
     // Restore datasets and network information
-
     Get<Settings>().Init();
     Get<Mle::MleRouter>().Restore();
 
@@ -189,6 +188,12 @@ void Instance::Finalize(void)
     IgnoreReturnValue(otIp6SetEnabled(this, false));
     IgnoreReturnValue(otLinkSetEnabled(this, false));
 #endif
+
+    /**
+     * Object was created on buffer, so instead of deleting
+     * the object we call destructor explicitly.
+     */
+    this->~Instance();
 
 exit:
     return;

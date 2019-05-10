@@ -80,8 +80,8 @@ PLATFORM_COMMON_SOURCES                                                         
     platform-fem.h                                                                                           \
     platform-nrf5.h                                                                                          \
     radio.c                                                                                                  \
-    random.c                                                                                                 \
     temp.c                                                                                                   \
+    trng.c                                                                                                   \
     spi-slave.c                                                                                              \
     system.c                                                                                                 \
     uart.c                                                                                                   \

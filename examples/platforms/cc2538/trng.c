@@ -33,7 +33,6 @@
  */
 
 #include <openthread/platform/radio.h>
-#include <openthread/platform/random.h>
 
 #include "platform-cc2538.h"
 #include "utils/code_utils.h"
@@ -79,20 +78,7 @@ void cc2538RandomInit(void)
     HWREG(SOC_ADC_RNDL) = seed & 0xff;
 }
 
-uint32_t otPlatRandomGet(void)
-{
-    uint32_t random = 0;
-
-    HWREG(SOC_ADC_ADCCON1) |= SOC_ADC_ADCCON1_RCTRL0;
-    random = HWREG(SOC_ADC_RNDL) | (HWREG(SOC_ADC_RNDH) << 8);
-
-    HWREG(SOC_ADC_ADCCON1) |= SOC_ADC_ADCCON1_RCTRL0;
-    random |= ((HWREG(SOC_ADC_RNDL) | (HWREG(SOC_ADC_RNDH) << 8)) << 16);
-
-    return random;
-}
-
-otError otPlatRandomGetTrue(uint8_t *aOutput, uint16_t aOutputLength)
+otError utilsEntropyGet(uint8_t *aOutput, uint16_t aOutputLength)
 {
     otError error   = OT_ERROR_NONE;
     uint8_t channel = 0;
