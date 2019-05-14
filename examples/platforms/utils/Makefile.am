@@ -28,29 +28,50 @@
 
 include $(abs_top_nlbuild_autotools_dir)/automake/pre.am
 
-lib_LIBRARIES                           = libopenthread-platform-utils.a
+lib_LIBRARIES                                           = libopenthread-platform-utils.a
 
-libopenthread_platform_utils_a_CPPFLAGS                 = \
+if OPENTHREAD_ENABLE_RADIO_ONLY
+lib_LIBRARIES                                          += libopenthread-platform-utils-radio.a
+endif
+
+COMMON_CPPFLAGS                                         = \
     -I$(top_srcdir)/include                               \
     -I$(top_srcdir)/examples/platforms                    \
     -I$(top_srcdir)/src/core                              \
     -I$(top_srcdir)/third_party/jlink/SEGGER_RTT_V640/RTT \
     $(NULL)
 
-libopenthread_platform_utils_a_SOURCES  = \
-    debug_uart.c                          \
-    entropy_trng.c                        \
-    logging_rtt.c                         \
-    settings_flash.c                      \
-    soft_source_match_table.c             \
+COMMON_SOURCES                                          = \
+    debug_uart.c                                          \
+    entropy_trng.c                                        \
+    logging_rtt.c                                         \
+    settings_flash.c                                      \
+    soft_source_match_table.c                             \
     $(NULL)
 
-noinst_HEADERS                          = \
-    code_utils.h                          \
-    flash.h                               \
-    logging_rtt.h                         \
-    soft_source_match_table.h             \
-    trng.h                                \
+libopenthread_platform_utils_a_CPPFLAGS                 = \
+    $(COMMON_CPPFLAGS)                                    \
+    $(NULL)
+
+libopenthread_platform_utils_a_SOURCES                  = \
+    $(COMMON_SOURCES)                                     \
+    $(NULL)
+
+libopenthread_platform_utils_radio_a_CPPFLAGS           = \
+    $(COMMON_CPPFLAGS)                                    \
+    -DOPENTHREAD_RADIO=1                                  \
+    $(NULL)
+
+libopenthread_platform_utils_radio_a_SOURCES            = \
+    $(COMMON_SOURCES)                                     \
+    $(NULL)
+
+noinst_HEADERS                                          = \
+    code_utils.h                                          \
+    flash.h                                               \
+    logging_rtt.h                                         \
+    soft_source_match_table.h                             \
+    trng.h                                                \
     $(NULL)
 
 include $(abs_top_nlbuild_autotools_dir)/automake/post.am

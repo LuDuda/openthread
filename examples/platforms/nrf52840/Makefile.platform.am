@@ -37,6 +37,16 @@ LDADD_COMMON                                                                    
     $(top_srcdir)/third_party/NordicSemiconductor/libraries/nrf_cc310/lib/libnrf_cc310_0.9.10.a \
     $(NULL)
 
+if OPENTHREAD_ENABLE_RADIO_ONLY
+LDADD_COMMON                                                                                 += \
+    $(top_builddir)/examples/platforms/utils/libopenthread-platform-utils-radio.a               \
+    $(NULL)
+else
+LDADD_COMMON                                                                                 += \
+    $(top_builddir)/examples/platforms/utils/libopenthread-platform-utils.a                     \
+    $(NULL)
+endif
+
 if OPENTHREAD_ENABLE_CUSTOM_LINKER_FILE
 LDFLAGS_COMMON                                                                               += \
     -T $(OPENTHREAD_CUSTOM_LINKER_FILE)                                                         \
