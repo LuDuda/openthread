@@ -26,6 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
@@ -72,6 +73,7 @@ void nrf5TempDeinit(void)
 
 void nrf5TempProcess(void)
 {
+    uint32_t error = NRF_SUCCESS;
     int32_t  prevTemperature = sTemperature;
     uint64_t now;
 
@@ -80,7 +82,9 @@ void nrf5TempProcess(void)
 
     if (now - sLastReadTimestamp > (TEMP_MEASUREMENT_INTERVAL * US_PER_S))
     {
-        (void)sd_temp_get(&sTemperature);
+        error = sd_temp_get(&sTemperature);
+        assert(error == NRF_SUCCESS);
+
         sLastReadTimestamp = now;
     }
 #else
