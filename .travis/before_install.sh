@@ -116,9 +116,9 @@ cd /tmp || die
     }
 
     [ $BUILD_TARGET != arm-gcc-8 ] || {
-        wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2018q4/gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2 || die
-        tar xjf gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2 || die
-        export PATH=/tmp/gcc-arm-none-eabi-8-2018-q4-major/bin:$PATH || die
+        wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2019q3/gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2 || die
+        tar xjf gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2 || die
+        export PATH=/tmp/gcc-arm-none-eabi-8-2019-q3-update/bin:$PATH || die
         arm-none-eabi-gcc --version || die
     }
 
