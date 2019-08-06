@@ -316,7 +316,7 @@ build_samr21() {
 }
 
 [ $BUILD_TARGET != arm-gcc-8 ] || {
-    export PATH=/tmp/gcc-arm-none-eabi-8-2018-q4-major/bin:$PATH || die
+    export PATH=/tmp/gcc-arm-none-eabi-8-2019-q3-update/bin:$PATH || die
 
     build_cc1352
     build_cc2538
