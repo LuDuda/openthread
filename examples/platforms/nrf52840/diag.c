@@ -369,8 +369,22 @@ exit:
     appendErrorResult(error, aOutput, aOutputMaxLen);
 }
 
+static void processDfu(otInstance *aInstance, int argc, char *argv[], char *aOutput, size_t aOutputMaxLen)
+{
+    OT_UNUSED_VARIABLE(aInstance);
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    OT_UNUSED_VARIABLE(aOutput);
+    OT_UNUSED_VARIABLE(aOutputMaxLen);
+
+    // Set GPREGRET register to BOOTLOADER_START value (0xB1)
+    NRF_POWER->GPREGRET = 0xB1;
+    NVIC_SystemReset();
+}
+
 const struct PlatformDiagCommand sCommands[] = {
     {"ccathreshold", &processCcaThreshold},
+    {"dfu", &processDfu},
     {"gpio", &processGpio},
     {"id", &processID},
     {"listen", &processListen},

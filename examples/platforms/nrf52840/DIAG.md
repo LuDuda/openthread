@@ -6,6 +6,7 @@ New commands allow for more accurate low level radio testing.
 
 ### New commands
  * [diag ccathreshold](#diag-ccathreshold)
+ * [diag dfu](#diag-dfu)
  * [diag gpio](#diag-gpio)
  * [diag id](#diag-id)
  * [diag listen](#diag-listen)
@@ -52,6 +53,9 @@ Set the CCA threshold.
 Value range: 0 to 255.
 
 Default: `45`.
+
+### diag dfu
+Enter the DFU mode.
 
 ### diag gpio
 Manage GPIO pins.
