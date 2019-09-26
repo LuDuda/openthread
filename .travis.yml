@@ -30,7 +30,7 @@ language: python
 python: "3.6"
 
 sudo: required
-dist: xenial
+dist: bionic
 
 before_install:
   - travis_retry .travis/before_install.sh
