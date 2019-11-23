@@ -151,4 +151,7 @@ Start transmiting messages with specified interval.
 ### diag transmit carrier
 Start transmitting continuous carrier wave.
 
+### diag transmit modulated_carrier
+Start transmitting modulated carrier wave.
+
 [DIAG]: ./../../../src/core/diags/README.md

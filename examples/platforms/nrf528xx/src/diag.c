@@ -111,6 +111,19 @@ static bool startCarrierTransmision(void)
     return nrf_802154_continuous_carrier();
 }
 
+static bool startModulatedCarrierTransmision(void)
+{
+    otRadioFrame *frame = otPlatRadioGetTransmitBuffer(NULL);
+
+    memset(frame->mPsdu, 0xA5, OT_RADIO_FRAME_MAX_SIZE);
+    frame->mPsdu[-1] = OT_RADIO_FRAME_MAX_SIZE;
+
+    nrf_802154_channel_set(sChannel);
+    nrf_802154_tx_power_set(sTxPower);
+
+    return nrf_802154_modulated_carrier(&frame->mPsdu[-1]);
+}
+
 static void processListen(otInstance *aInstance, int argc, char *argv[], char *aOutput, size_t aOutputMaxLen)
 {
     OT_UNUSED_VARIABLE(aInstance);
@@ -208,6 +221,17 @@ static void processTransmit(otInstance *aInstance, int argc, char *argv[], char 
         sTransmitMode = kDiagTransmitModeCarrier;
 
         snprintf(aOutput, aOutputMaxLen, "sending carrier on channel %d with tx power %d\r\nstatus 0x%02x\r\n",
+                 sChannel, sTxPower, error);
+    }
+    else if (strcmp(argv[0], "modulated_carrier") == 0)
+    {
+        otEXPECT_ACTION(sTransmitMode == kDiagTransmitModeIdle, error = OT_ERROR_INVALID_STATE);
+
+        otEXPECT_ACTION(startModulatedCarrierTransmision(), error = OT_ERROR_FAILED);
+
+        sTransmitMode = kDiagTransmitModeCarrier;
+
+        snprintf(aOutput, aOutputMaxLen, "sending modulated carrier on channel %d with tx power %d\r\nstatus 0x%02x\r\n",
                  sChannel, sTxPower, error);
     }
     else if (strcmp(argv[0], "interval") == 0)
