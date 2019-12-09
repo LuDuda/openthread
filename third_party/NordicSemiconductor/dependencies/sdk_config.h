@@ -568,10 +568,10 @@
 // </h>
 //==========================================================
 
-// <e> CLOCK_ENABLED - nrf_drv_clock - CLOCK peripheral driver
+// <e> NRF_CLOCK_ENABLED - nrf_drv_clock - CLOCK peripheral driver
 //==========================================================
-#ifndef CLOCK_ENABLED
-#define CLOCK_ENABLED 1
+#ifndef NRF_CLOCK_ENABLED
+#define NRF_CLOCK_ENABLED 1
 #endif
 // <o> CLOCK_CONFIG_XTAL_FREQ  - HF XTAL Frequency
 

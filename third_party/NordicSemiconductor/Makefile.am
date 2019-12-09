@@ -318,7 +318,7 @@ noinst_HEADERS                                                                  
     $(top_srcdir)/third_party/NordicSemiconductor/cmsis/core_cmSimd.h                                                     \
     $(top_srcdir)/third_party/NordicSemiconductor/dependencies/app_util_platform.h                                        \
     $(top_srcdir)/third_party/NordicSemiconductor/dependencies/app_util.h                                                 \
-    $(top_srcdir)/third_party/NordicSemiconductor/dependencies/apply_old_config.h                                         \
+    $(top_srcdir)/third_party/NordicSemiconductor/dependencies/legacy/apply_old_config.h                                  \
     $(top_srcdir)/third_party/NordicSemiconductor/dependencies/nordic_common.h                                            \
     $(top_srcdir)/third_party/NordicSemiconductor/dependencies/nrf_assert.h                                               \
     $(top_srcdir)/third_party/NordicSemiconductor/dependencies/nrf_error.h                                                \
