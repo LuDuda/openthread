@@ -31,7 +31,6 @@ include $(abs_top_nlbuild_autotools_dir)/automake/pre.am
 EXTRA_DIST                              = \
     nxp                                   \
     nlbuild-autotools                     \
-    openthread-test-driver                \
     NordicSemiconductor                   \
     silabs                                \
     $(NULL)
