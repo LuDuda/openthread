@@ -80,6 +80,10 @@ COMMONCFLAGS                      := \
 
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/common-switches.mk
 
+ifdef APP_CONFIG_CUSTOM_FILE
+COMMONCFLAGS += -DAPP_CONFIG_CUSTOM_FILE='\"$(APP_CONFIG_CUSTOM_FILE)\"'
+endif
+
 ifeq ($(DCDC),1)
 COMMONCFLAGS += -DDCDC_ENABLE
 endif

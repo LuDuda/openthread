@@ -44,6 +44,7 @@ override CXXFLAGS                                    := $(filter-out -Wundef,$(C
 COMMONCPPFLAGS                                                                                             = \
     -DCONFIG_GPIO_AS_PINRESET                                                                                \
     -DNRF52811_XXAA                                                                                          \
+    -DUSE_APP_CONFIG=1                                                                                       \
     -I$(srcdir)                                                                                              \
     -I$(top_srcdir)/include                                                                                  \
     -I$(top_srcdir)/examples/platforms                                                                       \
@@ -51,6 +52,8 @@ COMMONCPPFLAGS                                                                  
     -I$(top_srcdir)/src/core                                                                                 \
     -I$(top_srcdir)/third_party/NordicSemiconductor                                                          \
     -I$(top_srcdir)/third_party/NordicSemiconductor/cmsis                                                    \
+    -I$(top_srcdir)/third_party/NordicSemiconductor/config                                                   \
+    -I$(top_srcdir)/third_party/NordicSemiconductor/config/nrf52811/config                                   \
     -I$(top_srcdir)/third_party/NordicSemiconductor/dependencies                                             \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/clock                                            \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/common                                           \
@@ -75,6 +78,7 @@ COMMONCPPFLAGS                                                                  
     -I$(top_srcdir)/third_party/NordicSemiconductor/nrfx/drivers/include                                     \
     -I$(top_srcdir)/third_party/NordicSemiconductor/nrfx/mdk                                                 \
     -I$(top_srcdir)/third_party/NordicSemiconductor/nrfx/soc                                                 \
+    -Wno-unused-parameter                                                                                    \
     $(NULL)
 
 PLATFORM_COMMON_SOURCES                                                                                    = \

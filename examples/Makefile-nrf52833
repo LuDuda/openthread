@@ -81,6 +81,10 @@ COMMONCFLAGS                      := \
 
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/common-switches.mk
 
+ifdef APP_CONFIG_CUSTOM_FILE
+COMMONCFLAGS += -DAPP_CONFIG_CUSTOM_FILE='\"$(APP_CONFIG_CUSTOM_FILE)\"'
+endif
+
 ifeq ($(BOOTLOADER),1)
 $(info Warning: BOOTLOADER=1 switch is deprecated. Defaulting to BOOTLOADER=USB.)
 override BOOTLOADER = USB
