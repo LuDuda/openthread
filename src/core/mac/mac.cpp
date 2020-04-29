@@ -69,7 +69,7 @@ const char Mac::sNetworkNameInit[] = "OpenThread";
 
 Mac::Mac(Instance &aInstance)
     : InstanceLocator(aInstance)
-    , mEnabled(true)
+    , mEnabled(false)
     , mPendingActiveScan(false)
     , mPendingEnergyScan(false)
     , mPendingTransmitBeacon(false)
@@ -125,6 +125,7 @@ Mac::Mac(Instance &aInstance)
     ResetCounters();
     mExtendedPanId.Clear();
 
+    SetEnabled(true);
     mSubMac.Enable();
 
     SetExtendedPanId(static_cast<const ExtendedPanId &>(sExtendedPanidInit));
@@ -138,7 +139,7 @@ otError Mac::ActiveScan(uint32_t aScanChannels, uint16_t aScanDuration, ActiveSc
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!IsActiveScanInProgress() && !IsEnergyScanInProgress(), error = OT_ERROR_BUSY);
 
     mActiveScanHandler  = aHandler;
@@ -159,7 +160,7 @@ otError Mac::EnergyScan(uint32_t aScanChannels, uint16_t aScanDuration, EnergySc
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!IsActiveScanInProgress() && !IsEnergyScanInProgress(), error = OT_ERROR_BUSY);
 
     mEnergyScanHandler  = aHandler;
@@ -259,7 +260,7 @@ otError Mac::UpdateScanChannel(void)
 {
     otError error;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_ABORT);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_ABORT);
 
     error = mScanChannelMask.GetNextChannel(mScanChannel);
 
@@ -501,7 +502,7 @@ otError Mac::RequestDirectFrameTransmission(void)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!mPendingTransmitDataDirect && (mOperation != kOperationTransmitDataDirect), error = OT_ERROR_ALREADY);
 
     StartOperation(kOperationTransmitDataDirect);
@@ -515,7 +516,7 @@ otError Mac::RequestIndirectFrameTransmission(void)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!mPendingTransmitDataIndirect && (mOperation != kOperationTransmitDataIndirect),
                  error = OT_ERROR_ALREADY);
 
@@ -531,7 +532,7 @@ otError Mac::RequestOutOfBandFrameTransmission(otRadioFrame *aOobFrame)
     otError error = OT_ERROR_NONE;
 
     VerifyOrExit(aOobFrame != NULL, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!mPendingTransmitOobFrame && (mOperation != kOperationTransmitOutOfBandFrame),
                  error = OT_ERROR_ALREADY);
 
@@ -547,7 +548,7 @@ otError Mac::RequestDataPollTransmission(void)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
     VerifyOrExit(!mPendingTransmitPoll && (mOperation != kOperationTransmitPoll), error = OT_ERROR_ALREADY);
 
     // We ensure data frame and data poll tx requests are handled in the
@@ -670,7 +671,7 @@ void Mac::PerformNextOperation(void)
 {
     VerifyOrExit(mOperation == kOperationIdle);
 
-    if (!mEnabled)
+    if (!IsEnabled())
     {
         mPendingWaitingForData     = false;
         mPendingTransmitOobFrame   = false;
@@ -878,7 +879,7 @@ bool Mac::ShouldSendBeacon(void) const
 {
     bool shouldSend = false;
 
-    VerifyOrExit(mEnabled);
+    VerifyOrExit(IsEnabled());
 
     shouldSend = IsBeaconEnabled();
 
@@ -985,7 +986,7 @@ void Mac::BeginTransmit(void)
     bool     processTransmitAesCcm = true;
     TxFrame &sendFrame             = mSubMac.GetTransmitFrame();
 
-    VerifyOrExit(mEnabled, error = OT_ERROR_ABORT);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_ABORT);
     sendFrame.SetIsARetransmission(false);
 
     switch (mOperation)
@@ -1271,7 +1272,7 @@ void Mac::HandleTransmitDone(TxFrame &aFrame, RxFrame *aAckFrame, otError aError
         {
             bool framePending = aAckFrame->GetFramePending();
 
-            if (mEnabled && framePending)
+            if (IsEnabled() && framePending)
             {
                 mTimer.Start(kDataPollTimeout);
                 StartOperation(kOperationWaitingForData);
@@ -1532,7 +1533,7 @@ void Mac::HandleReceivedFrame(RxFrame *aFrame, otError aError)
 
     SuccessOrExit(error);
     VerifyOrExit(aFrame != NULL, error = OT_ERROR_NO_FRAME_RECEIVED);
-    VerifyOrExit(mEnabled, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(IsEnabled(), error = OT_ERROR_INVALID_STATE);
 
     // Ensure we have a valid frame before attempting to read any contents of
     // the buffer received from the radio.
