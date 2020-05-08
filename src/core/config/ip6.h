@@ -88,11 +88,11 @@
 /**
  * @def OPENTHREAD_CONFIG_IP6_MAX_ASSEMBLED_DATAGRAM
  *
- * This setting configures the max datagram length of a unfragmented IPv6 packet.
+ * This setting configures the max datagram length of an unfragmented IPv6 packet which can be reassembled.
  *
  */
 #ifndef OPENTHREAD_CONFIG_IP6_MAX_ASSEMBLED_DATAGRAM
-#define OPENTHREAD_CONFIG_IP6_MAX_ASSEMBLED_DATAGRAM 2000
+#define OPENTHREAD_CONFIG_IP6_MAX_ASSEMBLED_DATAGRAM 2560
 #endif
 
 /**

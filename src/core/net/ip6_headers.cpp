@@ -66,6 +66,7 @@ bool Header::IsValid(void) const
     VerifyOrExit((sizeof(*this) + GetPayloadLength()) <= Ip6::kMaxAssembledDatagramLength, ret = false);
 #endif
 
+
 exit:
     return ret;
 }
