@@ -3396,6 +3396,9 @@ void NcpBase::HandleDatagramFromStack(otMessage *aMessage)
 {
     VerifyOrExit(aMessage != NULL);
 
+    // Do not forward frames larger than SPINEL payload size.
+    VerifyOrExit(otMessageGetLength(aMessage) <= SPINEL_FRAME_MAX_COMMAND_PAYLOAD_SIZE, otMessageFree(aMessage));
+
     SuccessOrExit(otMessageQueueEnqueue(&mMessageQueue, aMessage));
 
     // If there is no queued spinel command response, try to write/send
