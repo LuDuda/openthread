@@ -392,6 +392,7 @@ private:
     int        HandleMbedtlsTransmit(const unsigned char *aBuf, size_t aLength);
 
 #if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
+
     static void HandleMbedtlsExportKeys(void *                      aContext,
                                         mbedtls_ssl_key_export_type aType,
                                         const unsigned char *       aMasterSecret,
@@ -406,18 +407,20 @@ private:
                                  const unsigned char         aClientRandom[32],
                                  const unsigned char         aServerRandom[32],
                                  mbedtls_tls_prf_types       aTlsPrfType);
+
 #else
-    static int                HandleMbedtlsExportKeys(void *               aContext,
-                                                      const unsigned char *aMasterSecret,
-                                                      const unsigned char *aKeyBlock,
-                                                      size_t               aMacLength,
-                                                      size_t               aKeyLength,
-                                                      size_t               aIvLength);
-    int                       HandleMbedtlsExportKeys(const unsigned char *aMasterSecret,
-                                                      const unsigned char *aKeyBlock,
-                                                      size_t               aMacLength,
-                                                      size_t               aKeyLength,
-                                                      size_t               aIvLength);
+
+    static int HandleMbedtlsExportKeys(void *               aContext,
+                                       const unsigned char *aMasterSecret,
+                                       const unsigned char *aKeyBlock,
+                                       size_t               aMacLength,
+                                       size_t               aKeyLength,
+                                       size_t               aIvLength);
+    int        HandleMbedtlsExportKeys(const unsigned char *aMasterSecret,
+                                       const unsigned char *aKeyBlock,
+                                       size_t               aMacLength,
+                                       size_t               aKeyLength,
+                                       size_t               aIvLength);
 #endif
 
     static void HandleTimer(Timer &aTimer);

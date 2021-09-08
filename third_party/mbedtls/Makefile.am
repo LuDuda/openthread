@@ -50,21 +50,21 @@ libmbedcrypto_a_CPPFLAGS                      = \
 libmbedcrypto_a_SOURCES                       = \
     repo/library/aes.c                          \
     repo/library/aesni.c                        \
-    repo/library/arc4.c                         \
+    repo/library/aesni.h                        \
     repo/library/aria.c                         \
     repo/library/asn1parse.c                    \
     repo/library/asn1write.c                    \
     repo/library/base64.c                       \
     repo/library/bignum.c                       \
-    repo/library/blowfish.c                     \
+    repo/library/bn_mul.h                       \
     repo/library/camellia.c                     \
     repo/library/ccm.c                          \
-    repo/library/certs.c                        \
     repo/library/chacha20.c                     \
     repo/library/chachapoly.c                   \
     repo/library/check_crypto_config.h          \
     repo/library/cipher.c                       \
     repo/library/cipher_wrap.c                  \
+    repo/library/cipher_wrap.h                  \
     repo/library/cmac.c                         \
     repo/library/common.h                       \
     repo/library/ctr_drbg.c                     \
@@ -76,26 +76,34 @@ libmbedcrypto_a_SOURCES                       = \
     repo/library/ecjpake.c                      \
     repo/library/ecp.c                          \
     repo/library/ecp_curves.c                   \
+    repo/library/ecp_internal_alt.h             \
+    repo/library/ecp_invasive.h                 \
     repo/library/entropy.c                      \
     repo/library/entropy_poll.c                 \
+    repo/library/entropy_poll.h                 \
     repo/library/error.c                        \
     repo/library/gcm.c                          \
-    repo/library/havege.c                       \
     repo/library/hkdf.c                         \
     repo/library/hmac_drbg.c                    \
     repo/library/md.c                           \
-    repo/library/md2.c                          \
-    repo/library/md4.c                          \
     repo/library/md5.c                          \
+    repo/library/md_wrap.h                      \
     repo/library/memory_buffer_alloc.c          \
+    repo/library/mps_common.h                   \
+    repo/library/mps_error.h                    \
+    repo/library/mps_reader.c                   \
+    repo/library/mps_reader.h                   \
+    repo/library/mps_trace.c                    \
+    repo/library/mps_trace.h                    \
     repo/library/net_sockets.c                  \
     repo/library/nist_kw.c                      \
     repo/library/oid.c                          \
     repo/library/padlock.c                      \
+    repo/library/padlock.h                      \
     repo/library/pem.c                          \
     repo/library/pk.c                           \
     repo/library/pk_wrap.c                      \
-    repo/library/pkcs11.c                       \
+    repo/library/pk_wrap.h                      \
     repo/library/pkcs12.c                       \
     repo/library/pkcs5.c                        \
     repo/library/pkparse.c                      \
@@ -104,11 +112,24 @@ libmbedcrypto_a_SOURCES                       = \
     repo/library/platform_util.c                \
     repo/library/poly1305.c                     \
     repo/library/psa_crypto.c                   \
+    repo/library/psa_crypto_aead.c              \
+    repo/library/psa_crypto_aead.h              \
+    repo/library/psa_crypto_cipher.c            \
+    repo/library/psa_crypto_cipher.h            \
+    repo/library/psa_crypto_client.c            \
     repo/library/psa_crypto_core.h              \
     repo/library/psa_crypto_driver_wrappers.c   \
     repo/library/psa_crypto_driver_wrappers.h   \
+    repo/library/psa_crypto_ecp.c               \
+    repo/library/psa_crypto_ecp.h               \
+    repo/library/psa_crypto_hash.c              \
+    repo/library/psa_crypto_hash.h              \
     repo/library/psa_crypto_invasive.h          \
     repo/library/psa_crypto_its.h               \
+    repo/library/psa_crypto_mac.c               \
+    repo/library/psa_crypto_mac.h               \
+    repo/library/psa_crypto_rsa.c               \
+    repo/library/psa_crypto_rsa.h               \
     repo/library/psa_crypto_se.c                \
     repo/library/psa_crypto_se.h                \
     repo/library/psa_crypto_slot_management.c   \
@@ -118,7 +139,8 @@ libmbedcrypto_a_SOURCES                       = \
     repo/library/psa_its_file.c                 \
     repo/library/ripemd160.c                    \
     repo/library/rsa.c                          \
-    repo/library/rsa_internal.c                 \
+    repo/library/rsa_alt_helpers.c              \
+    repo/library/rsa_alt_helpers.h              \
     repo/library/sha1.c                         \
     repo/library/sha256.c                       \
     repo/library/sha512.c                       \
@@ -127,6 +149,7 @@ libmbedcrypto_a_SOURCES                       = \
     repo/library/ssl_cli.c                      \
     repo/library/ssl_cookie.c                   \
     repo/library/ssl_invasive.h                 \
+    repo/library/ssl_misc.h                     \
     repo/library/ssl_msg.c                      \
     repo/library/ssl_srv.c                      \
     repo/library/ssl_ticket.c                   \
@@ -144,7 +167,6 @@ libmbedcrypto_a_SOURCES                       = \
     repo/library/x509_csr.c                     \
     repo/library/x509write_crt.c                \
     repo/library/x509write_csr.c                \
-    repo/library/xtea.c                         \
     $(NULL)
 
 libmbedcrypto_radio_a_CPPFLAGS                = \
