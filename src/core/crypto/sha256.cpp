@@ -33,6 +33,8 @@
 
 #include "sha256.hpp"
 
+#include <mbedtls/version.h>
+
 #include "common/message.hpp"
 
 namespace ot {
@@ -50,12 +52,20 @@ Sha256::~Sha256(void)
 
 void Sha256::Start(void)
 {
+#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
+    mbedtls_sha256_starts(&mContext, 0);
+#else
     mbedtls_sha256_starts_ret(&mContext, 0);
+#endif
 }
 
 void Sha256::Update(const void *aBuf, uint16_t aBufLength)
 {
+#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
+    mbedtls_sha256_update(&mContext, reinterpret_cast<const uint8_t *>(aBuf), aBufLength);
+#else
     mbedtls_sha256_update_ret(&mContext, reinterpret_cast<const uint8_t *>(aBuf), aBufLength);
+#endif
 }
 
 void Sha256::Update(const Message &aMessage, uint16_t aOffset, uint16_t aLength)
@@ -73,7 +83,11 @@ void Sha256::Update(const Message &aMessage, uint16_t aOffset, uint16_t aLength)
 
 void Sha256::Finish(Hash &aHash)
 {
+#if (MBEDTLS_VERSION_NUMBER >= 0x03000000)
+    mbedtls_sha256_finish(&mContext, aHash.m8);
+#else
     mbedtls_sha256_finish_ret(&mContext, aHash.m8);
+#endif
 }
 
 } // namespace Crypto
