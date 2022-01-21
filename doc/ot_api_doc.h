@@ -120,9 +120,14 @@
  * @}
  *
  * @defgroup api-cli                  Command Line Interface
+<<<<<<< HEAD
  * @defgroup api-crypto               Crypto
  * @defgroup api-entropy              Entropy Source
  * @defgroup api-factory-diagnostics  Factory Diagnostics
+=======
+ * @defgroup api-crypto               Crypto - Thread Stack
+ * @defgroup api-factory-diagnostics  Factory Diagnostics - Thread Stack
+>>>>>>> 0ecf46841 ([crypto] allow platform to define CSPRNG)
  * @defgroup api-heap                 Heap
  * @defgroup api-history-tracker      History Tracker
  * @defgroup api-jam-detection        Jam Detection
