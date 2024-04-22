@@ -40,6 +40,10 @@
 #include <openthread/platform/logging.h>
 #include <openthread/platform/memory.h>
 
+#if OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA
+#define MBEDTLS_PSA_CRYPTO_C
+#endif
+
 #define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 
 #define MBEDTLS_AES_C
