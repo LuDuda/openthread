@@ -91,6 +91,7 @@ target_link_libraries(openthread-simulation PRIVATE
     openthread-platform
     ot-simulation-config
     ot-config
+    mbedtls
 )
 
 target_compile_options(openthread-simulation PRIVATE
