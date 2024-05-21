@@ -868,9 +868,7 @@ static int copy_from_psa(mbedtls_svc_key_id_t key_id,
     psa_status_t status;
     psa_key_attributes_t key_attr = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_type_t key_type;
-#if defined(MBEDTLS_RSA_C)
     psa_algorithm_t alg_type;
-#endif
     size_t key_bits;
     /* Use a buffer size large enough to contain either a key pair or public key. */
     unsigned char exp_key[PSA_EXPORT_KEY_PAIR_OR_PUBLIC_MAX_SIZE];
@@ -901,10 +899,9 @@ static int copy_from_psa(mbedtls_svc_key_id_t key_id,
         key_type = PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(key_type);
     }
     key_bits = psa_get_key_bits(&key_attr);
-
-#if defined(MBEDTLS_RSA_C)
     alg_type = psa_get_key_algorithm(&key_attr);
 
+#if defined(MBEDTLS_RSA_C)
     if ((key_type == PSA_KEY_TYPE_RSA_KEY_PAIR) ||
         (key_type == PSA_KEY_TYPE_RSA_PUBLIC_KEY)) {
 
