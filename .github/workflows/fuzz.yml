@@ -29,9 +29,7 @@
 name: CIFuzz
 
 on:
-  pull_request:
-    branches:
-      - 'main'
+  push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.repository == 'openthread/openthread' && github.run_id) || github.ref }}
@@ -50,12 +48,12 @@ jobs:
        egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
    - name: Build Fuzzers
-     uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@c0e4bb8d15a68b7f8cc731ea75523e48a2301bcf # master
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/build_fuzzers@64915566b730b21b7eff44f4f432458b97031a21 # master
      with:
        oss-fuzz-project-name: 'openthread'
        dry-run: false
    - name: Run Fuzzers
-     uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@c0e4bb8d15a68b7f8cc731ea75523e48a2301bcf # master
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/run_fuzzers@64915566b730b21b7eff44f4f432458b97031a21 # master
      with:
        oss-fuzz-project-name: 'openthread'
        fuzz-seconds: 1800

@@ -155,6 +155,7 @@ OT_TOOL_WEAK otError otPlatCryptoHmacSha256Init(otCryptoContext *aContext)
     Error                    error  = kErrorNone;
     const mbedtls_md_info_t *mdInfo = nullptr;
     mbedtls_md_context_t    *context;
+    int res;
 
     VerifyOrExit(aContext != nullptr, error = kErrorInvalidArgs);
     VerifyOrExit(aContext->mContextSize >= sizeof(mbedtls_md_context_t), error = kErrorFailed);
@@ -162,7 +163,20 @@ OT_TOOL_WEAK otError otPlatCryptoHmacSha256Init(otCryptoContext *aContext)
     context = static_cast<mbedtls_md_context_t *>(aContext->mContext);
     mbedtls_md_init(context);
     mdInfo = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
-    VerifyOrExit((mbedtls_md_setup(context, mdInfo, 1) == 0), error = kErrorFailed);
+
+    res = mbedtls_md_setup(context, mdInfo, 1);
+
+    if (res == MBEDTLS_ERR_MD_ALLOC_FAILED)
+    {
+        OT_ASSERT(false);
+    }
+
+    if (res == MBEDTLS_ERR_MD_BAD_INPUT_DATA)
+    {
+        OT_ASSERT(false);
+    }
+
+    VerifyOrExit(res == 0, error = kErrorFailed);
 
 exit:
     return error;
