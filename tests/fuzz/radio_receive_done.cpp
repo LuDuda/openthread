@@ -42,6 +42,11 @@
 #include "common/code_utils.hpp"
 #include "common/time.hpp"
 
+
+extern "C" void *otPlatCAlloc(size_t aNum, size_t aSize) { return calloc(aNum, aSize); }
+extern "C" void otPlatFree(void *aPtr) { free(aPtr); }
+
+
 void AdvanceTime(otInstance *aInstance, uint32_t aDuration)
 {
     uint32_t time = otPlatAlarmMilliGetNow() + aDuration;

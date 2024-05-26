@@ -56,6 +56,7 @@ set -euxo pipefail
         -DOT_DHCP6_SERVER=ON \
         -DOT_DNS_CLIENT=ON \
         -DOT_ECDSA=ON \
+        -DOT_EXTERNAL_HEAP=ON \
         -DOT_HISTORY_TRACKER=ON \
         -DOT_IP6_FRAGM=ON \
         -DOT_JAM_DETECTION=ON \

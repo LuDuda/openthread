@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include <openthread/cli.h>
 #include <openthread/instance.h>
@@ -43,6 +44,11 @@
 #include "fuzzer_platform.h"
 #include "common/code_utils.hpp"
 #include "common/time.hpp"
+
+int gAlloc = 0;
+
+extern "C" void *otPlatCAlloc(size_t aNum, size_t aSize) { gAlloc++; return calloc(aNum, aSize); }
+extern "C" void otPlatFree(void *aPtr) { gAlloc--; free(aPtr); }
 
 static int CliOutput(void *aContext, const char *aFormat, va_list aArguments)
 {
@@ -108,6 +114,30 @@ exit:
     if (instance != nullptr)
     {
         otInstanceFinalize(instance);
+    }
+
+    if (gAlloc)
+    {
+        if (gAlloc == 4)
+        {
+            assert(false);
+        }
+        else if (gAlloc == 3)
+        {
+            assert(false);
+        }
+        else if (gAlloc == 2)
+        {
+            assert (false);
+        }
+        else if (gAlloc == 1)
+        {
+            assert(false);
+        }
+        else
+        {
+            assert(false);
+        }
     }
 
     return 0;
