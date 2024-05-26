@@ -29,13 +29,7 @@
 name: CIFuzz
 
 on:
-  pull_request:
-    branches:
-      - 'main'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || (github.repository == 'openthread/openthread' && github.run_id) || github.ref }}
-  cancel-in-progress: true
+  push
 
 permissions:  # added using https://github.com/step-security/secure-workflows
   contents: read
@@ -50,19 +44,84 @@ jobs:
        egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
    - name: Build Fuzzers
-     uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@c0e4bb8d15a68b7f8cc731ea75523e48a2301bcf # master
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/build_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
      with:
        oss-fuzz-project-name: 'openthread'
        dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
    - name: Run Fuzzers
-     uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@c0e4bb8d15a68b7f8cc731ea75523e48a2301bcf # master
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/run_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
      with:
        oss-fuzz-project-name: 'openthread'
        fuzz-seconds: 1800
        dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
    - name: Upload Crash
      uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
      if: failure()
      with:
        name: artifacts
        path: ./out/artifacts
+
+ Fuzzing2:
+   runs-on: ubuntu-20.04
+   steps:
+   - name: Harden Runner
+     uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+     with:
+       egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+   - name: Build Fuzzers
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/build_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
+     with:
+       oss-fuzz-project-name: 'openthread'
+       dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
+   - name: Run Fuzzers
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/run_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
+     with:
+       oss-fuzz-project-name: 'openthread'
+       fuzz-seconds: 1800
+       dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
+   - name: Upload Crash
+     uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+     if: failure()
+     with:
+       name: artifacts
+       path: ./out/artifacts
+
+ Fuzzing3:
+   runs-on: ubuntu-20.04
+   steps:
+   - name: Harden Runner
+     uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+     with:
+       egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+   - name: Build Fuzzers
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/build_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
+     with:
+       oss-fuzz-project-name: 'openthread'
+       dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
+   - name: Run Fuzzers
+     uses: LuDuda/oss-fuzz/infra/cifuzz/actions/run_fuzzers@5f740a8d5e504678f37ffc34d5d78a1c50293240 # master
+     with:
+       oss-fuzz-project-name: 'openthread'
+       fuzz-seconds: 1800
+       dry-run: false
+     env:
+       GITHUB_REPOSITORY: LuDuda/openthread
+   - name: Upload Crash
+     uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+     if: failure()
+     with:
+       name: artifacts
+       path: ./out/artifacts
+
