@@ -145,7 +145,7 @@ template <> otError TcpExample::Process<Cmd("init")>(Arg aArgs[])
 
             // mbedtls_debug_set_threshold(0);
 
-            //otPlatCryptoRandomInit();
+            otPlatCryptoRandomInit();
             mbedtls_x509_crt_init(&mSrvCert);
             mbedtls_pk_init(&mPKey);
 
@@ -261,24 +261,6 @@ template <> otError TcpExample::Process<Cmd("init")>(Arg aArgs[])
     mInitialized = true;
 
 exit:
-    if (error != OT_ERROR_NONE)
-    {
-#if OPENTHREAD_CONFIG_TLS_ENABLE
-        if (mUseTls)
-        {
-            //otPlatCryptoRandomDeinit();
-            mbedtls_ssl_config_free(&mSslConfig);
-            mbedtls_ssl_free(&mSslContext);
-
-            mbedtls_pk_free(&mPKey);
-            mbedtls_x509_crt_free(&mSrvCert);
-        }
-
-        otTcpCircularSendBufferForceDiscardAll(&mSendBuffer);
-        OT_UNUSED_VARIABLE(otTcpCircularSendBufferDeinitialize(&mSendBuffer));
-#endif
-    }
-
     return error;
 }
 
@@ -304,7 +286,7 @@ template <> otError TcpExample::Process<Cmd("deinit")>(Arg aArgs[])
 #if OPENTHREAD_CONFIG_TLS_ENABLE
     if (mUseTls)
     {
-        //otPlatCryptoRandomDeinit();
+        otPlatCryptoRandomDeinit();
         mbedtls_ssl_config_free(&mSslConfig);
         mbedtls_ssl_free(&mSslContext);
 
