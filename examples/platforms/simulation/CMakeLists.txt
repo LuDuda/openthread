@@ -67,7 +67,6 @@ set(OT_PLATFORM_DEFINES ${OT_PLATFORM_DEFINES} PARENT_SCOPE)
 add_library(openthread-simulation
     alarm.c
     ble.c
-    crypto.c
     diag.c
     dns.c
     dnssd.c
@@ -99,6 +98,7 @@ target_link_libraries(openthread-simulation PRIVATE
     openthread-platform
     ot-simulation-config
     ot-config
+    mbedtls
 )
 
 target_compile_options(openthread-simulation PRIVATE
