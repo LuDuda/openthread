@@ -225,6 +225,8 @@ void FinalizeTest(void)
     SuccessOrQuit(otThreadSetEnabled(sInstance, false));
     SuccessOrQuit(otInstanceErasePersistentInfo(sInstance));
     testFreeInstance(sInstance);
+
+    VerifyOrQuit(sHeapAllocatedPtrs.GetLength() == 0);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
