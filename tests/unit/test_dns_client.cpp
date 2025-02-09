@@ -508,6 +508,7 @@ void TestDnsClient(void)
     Dns::ServiceDiscovery::Server::Counters oldServerCounters;
     Dns::ServiceDiscovery::Server::Counters newServerCounters;
     uint16_t                                heapAllocations;
+    uint32_t                                iter = 0;
 
     Log("--------------------------------------------------------------------------------------------");
     Log("TestDnsClient");
@@ -542,6 +543,8 @@ void TestDnsClient(void)
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Start SRP server.
 
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
     SuccessOrQuit(srpServer->SetAddressMode(Srp::Server::kAddressModeUnicast));
     VerifyOrQuit(srpServer->GetState() == Srp::Server::kStateDisabled);
 
@@ -553,6 +556,9 @@ void TestDnsClient(void)
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Start SRP client.
+
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
 
     srpClient->EnableAutoStartMode(nullptr, nullptr);
     VerifyOrQuit(srpClient->IsAutoStartModeEnabled());
@@ -585,6 +591,9 @@ void TestDnsClient(void)
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Validate DNS Client `Browse()`
+
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
 
     sBrowseInfo.Reset();
     Log("Browse(%s)", kService1FullName);
@@ -627,6 +636,9 @@ void TestDnsClient(void)
     SuccessOrQuit(dnsClient->Browse("_unknown2._udp.default.service.arpa.", BrowseCallback, sInstance));
     AdvanceTime(100);
     VerifyOrQuit(sBrowseInfo.mCallbackCount == 4);
+
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Validate DNS Client `ResolveService()` using all service modes
@@ -754,6 +766,9 @@ void TestDnsClient(void)
     // Validate DNS Client `ResolveService()` using all service modes
     // when sever does not provide any RR in the addition data section.
 
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
+
     for (Dns::Client::QueryConfig::ServiceMode mode : kServiceModes)
     {
         Log("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -795,6 +810,9 @@ void TestDnsClient(void)
     }
 
     dnsServer->SetTestMode(Dns::ServiceDiscovery::Server::kTestModeDisabled);
+
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Validate DNS Client `ResolveServiceAndHostAddress()` using all service modes
@@ -873,6 +891,9 @@ void TestDnsClient(void)
 
     dnsServer->SetTestMode(Dns::ServiceDiscovery::Server::kTestModeDisabled);
 
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
+
     Log("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
     Log("Set TestMode on server to not include any RR in additional section AND to only accept single question");
     dnsServer->SetTestMode(Dns::ServiceDiscovery::Server::kTestModeEmptyAdditionalSection +
@@ -937,6 +958,9 @@ void TestDnsClient(void)
     sResolveServiceInfo.Reset();
     SuccessOrQuit(dnsClient->ResolveService(kInstance1Label, kService1FullName, ServiceCallback, sInstance, nullptr));
 
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
+
     AdvanceTime(100);
 
     VerifyOrQuit(sResolveServiceInfo.mCallbackCount == 1);
@@ -989,8 +1013,12 @@ void TestDnsClient(void)
 
     Log("Disabling SRP server");
 
+    Log("#################### HEAP ALLOCATIONS = %d [%d]", sHeapAllocatedPtrs.GetLength(), iter++);
+
     srpServer->SetEnabled(false);
     AdvanceTime(100);
+
+    Log("#################### heapAllocations= %d sHeapAllocatedPtrs.GetLength() = %d", heapAllocations, sHeapAllocatedPtrs.GetLength());
 
     VerifyOrQuit(heapAllocations == sHeapAllocatedPtrs.GetLength());
 

@@ -104,8 +104,8 @@
 #define MBEDTLS_PSA_CRYPTO_CONFIG
 
 // Temporary for ITS..
-#define MBEDTLS_PSA_ITS_FILE_C
-#define MBEDTLS_FS_IO
+// #define MBEDTLS_PSA_ITS_FILE_C
+// #define MBEDTLS_FS_IO
 
 #define MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
 

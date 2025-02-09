@@ -63,6 +63,11 @@
 otInstance *gInstance = nullptr;
 bool        gDryRun   = false;
 
+#if OPENTHREAD_PSA_CRYPTO_NATIVE_ITS_FILE
+static char sNativeItsFileName[256];
+extern const char *gItsFileNamePrefix;
+#endif
+
 CoprocessorType sCoprocessorType = OT_COPROCESSOR_UNKNOWN;
 
 static void processStateChange(otChangedFlags aFlags, void *aContext)
@@ -205,6 +210,17 @@ void platformInit(otPlatformConfig *aPlatformConfig)
         exit(OT_EXIT_FAILURE);
         break;
     }
+
+#if OPENTHREAD_PSA_CRYPTO_NATIVE_ITS_FILE
+    uint64_t nodeId;
+
+    otPlatRadioGetIeeeEui64(aInstance, reinterpret_cast<uint8_t *>(&nodeId));
+    nodeId = ot::BigEndian::HostSwap64(nodeId);
+
+    snprintf(sNativeItsFileName, sizeof(sNativeItsFileName), "%s/%s_%d_", OPENTHREAD_CONFIG_POSIX_SETTINGS_PATH,
+             getenv("PORT_OFFSET"), nodeId);
+    gItsFileNamePrefix = sNativeItsFileName;
+#endif
 
     aPlatformConfig->mCoprocessorType = sCoprocessorType;
 }
