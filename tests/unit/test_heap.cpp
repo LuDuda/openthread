@@ -40,7 +40,7 @@
 
 namespace ot {
 
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 
 /**
  * Verifies single variable allocating and freeing.
@@ -173,15 +173,15 @@ void RunTimerTests(void)
     TestAllocateMultiple();
 }
 
-#endif // !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#endif // OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 
 } // namespace ot
 
 int main(void)
 {
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
     ot::RunTimerTests();
     printf("All tests passed\n");
-#endif // !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#endif // OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
     return 0;
 }

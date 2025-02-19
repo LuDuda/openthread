@@ -57,11 +57,12 @@ static uint64_t gMultiInstanceRaw[MULTI_INSTANCE_SIZE];
 
 #endif
 
-#if OPENTHREAD_MTD || OPENTHREAD_FTD
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 OT_DEFINE_ALIGNED_VAR(sHeapRaw, sizeof(Utils::Heap), uint64_t);
 Utils::Heap *Instance::sHeap{nullptr};
 #endif
+
+#if OPENTHREAD_MTD || OPENTHREAD_FTD
 #if OPENTHREAD_CONFIG_REFERENCE_DEVICE_ENABLE
 bool Instance::sDnsNameCompressionEnabled = true;
 #endif
@@ -289,7 +290,7 @@ Instance::Instance(void)
 #endif
 }
 
-#if (OPENTHREAD_MTD || OPENTHREAD_FTD) && !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 Utils::Heap &Instance::GetHeap(void)
 {
     if (nullptr == sHeap)

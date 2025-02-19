@@ -60,10 +60,12 @@
 #include "common/timer.hpp"
 #include "common/type_traits.hpp"
 #include "common/uptime.hpp"
+#include "crypto/mbedtls.hpp"
 #include "diags/factory_diags.hpp"
 #include "instance/extension.hpp"
 #include "mac/link_raw.hpp"
 #include "radio/radio.hpp"
+#include "utils/heap.hpp"
 #include "utils/otns.hpp"
 #include "utils/power_calibration.hpp"
 #include "utils/static_counter.hpp"
@@ -78,7 +80,6 @@
 #include "common/code_utils.hpp"
 #include "common/notifier.hpp"
 #include "common/settings.hpp"
-#include "crypto/mbedtls.hpp"
 #include "crypto/storage.hpp"
 #include "mac/mac.hpp"
 #include "mac/wakeup_tx_scheduler.hpp"
@@ -136,7 +137,6 @@
 #include "thread/tmf.hpp"
 #include "utils/channel_manager.hpp"
 #include "utils/channel_monitor.hpp"
-#include "utils/heap.hpp"
 #include "utils/history_tracker.hpp"
 #include "utils/jam_detector.hpp"
 #include "utils/link_metrics_manager.hpp"
@@ -329,6 +329,15 @@ public:
      */
     void Finalize(void);
 
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
+    /**
+     * Returns a reference to the Heap object.
+     *
+     * @returns A reference to the Heap object.
+     */
+    static Utils::Heap &GetHeap(void);
+#endif
+
 #if OPENTHREAD_MTD || OPENTHREAD_FTD
     /**
      * Deletes all the settings stored in non-volatile memory, and then triggers a platform reset.
@@ -344,15 +353,6 @@ public:
      * @retval kErrorInvalidState  Device is not in `disabled` state/role.
      */
     Error ErasePersistentInfo(void);
-
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
-    /**
-     * Returns a reference to the Heap object.
-     *
-     * @returns A reference to the Heap object.
-     */
-    static Utils::Heap &GetHeap(void);
-#endif
 
 #if OPENTHREAD_CONFIG_COAP_API_ENABLE
     /**
@@ -449,7 +449,7 @@ private:
     static LogLevel sLogLevel;
 #endif
 
-#if (OPENTHREAD_MTD || OPENTHREAD_FTD) && !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
     static Utils::Heap *sHeap;
 #endif
 
@@ -471,7 +471,7 @@ private:
     TimerMicro::Scheduler mTimerMicroScheduler;
 #endif
 
-#if OPENTHREAD_MTD || OPENTHREAD_FTD
+#if OPENTHREAD_MTD || OPENTHREAD_FTD || (OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA)
     // Random::Manager is initialized before other objects. Note that it
     // requires MbedTls which itself may use Heap.
     Crypto::MbedTls mMbedTls;

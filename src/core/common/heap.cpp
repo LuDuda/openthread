@@ -44,7 +44,7 @@ void *CAlloc(size_t aCount, size_t aSize) { return otPlatCAlloc(aCount, aSize); 
 
 void Free(void *aPointer) { otPlatFree(aPointer); }
 
-#else
+#elif OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 
 void *CAlloc(size_t aCount, size_t aSize) { return Instance::GetHeap().CAlloc(aCount, aSize); }
 
