@@ -188,7 +188,7 @@ jobs:
       run: |
         script/check-scan-build
 
-  mbedtls2-build:
+  mbedtls3-build:
     runs-on: ubuntu-24.04
     steps:
     - name: Harden Runner
@@ -202,15 +202,9 @@ jobs:
     - name: Bootstrap
       run: |
         sudo apt-get --no-install-recommends install -y ninja-build libreadline-dev libncurses-dev
-        rm -rf third_party/mbedtls/repo
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      with:
-        repository: ARMmbed/mbedtls
-        ref: v2.28.8
-        path: third_party/mbedtls/repo
     - name: Build
       run: |
-        ./script/test build
+        OT_OPTIONS="-DOT_CRYPTO_LIB=MBEDTLS -DOT_PLATFORM_KEY_REF=OFF" ./script/test build
 
   arm-gcc:
     name: arm-gcc-${{ matrix.gcc_ver }}
