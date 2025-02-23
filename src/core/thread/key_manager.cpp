@@ -174,20 +174,15 @@ KeyManager::KeyManager(Instance &aInstance)
     , mKeySwitchGuardTimer(0)
     , mKeyRotationTimer(aInstance)
     , mKekFrameCounter(0)
+#if !OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     , mIsPskcSet(false)
+#endif
 {
     otPlatCryptoInit();
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    {
-        NetworkKey networkKey;
-
-        mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
-        mPskcRef       = Crypto::Storage::kInvalidKeyRef;
-
-        IgnoreError(networkKey.GenerateRandom());
-        StoreNetworkKey(networkKey, /* aOverWriteExisting */ false);
-    }
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
 #else
     IgnoreError(mNetworkKey.GenerateRandom());
     mPskc.Clear();
@@ -222,7 +217,11 @@ void KeyManager::SetPskc(const Pskc &aPskc)
 #endif
 
 exit:
+#if !OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     mIsPskcSet = true;
+#endif
+
+    return;
 }
 
 void KeyManager::ResetFrameCounters(void)
@@ -260,7 +259,7 @@ void KeyManager::ResetFrameCounters(void)
 void KeyManager::SetNetworkKey(const NetworkKey &aNetworkKey)
 {
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    if (Crypto::Storage::IsKeyRefValid(mNetworkKeyRef))
+    if (mNetworkKeyRef != Crypto::Storage::kInvalidKeyRef)
     {
         NetworkKey networkKey;
 
@@ -272,6 +271,7 @@ void KeyManager::SetNetworkKey(const NetworkKey &aNetworkKey)
     Get<Notifier>().Signal(kEventNetworkKeyChanged);
 #else
     SuccessOrExit(Get<Notifier>().Update(mNetworkKey, aNetworkKey, kEventNetworkKeyChanged));
+    mIsNetworkKeySet = true;
 #endif
 
     Get<Notifier>().Signal(kEventThreadKeySeqCounterChanged);
@@ -344,6 +344,16 @@ void KeyManager::ComputeTrelKey(uint32_t aKeySequence, Mac::Key &aKey) const
 void KeyManager::UpdateKeyMaterial(void)
 {
     HashKeys hashKeys;
+
+    // If network key has not been configured, generate a random one.
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    if (mNetworkKeyRef == Crypto::Storage::kInvalidKeyRef)
+    {
+        NetworkKey networkKey;
+        IgnoreError(networkKey.GenerateRandom());
+        StoreNetworkKey(networkKey, /* aOverWriteExisting */ false);
+    }
+#endif
 
     ComputeKeys(mKeySequence, hashKeys);
 
@@ -428,6 +438,19 @@ void KeyManager::SetCurrentKeySequence(uint32_t aKeySequence, KeySeqUpdateFlags 
 
 exit:
     return;
+}
+
+const Mle::KeyMaterial &KeyManager::GetCurrentMleKey(void)
+{
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    // Make sure MLE key has been generated.
+    if (mMleKey.GetKeyRef() == Crypto::Storage::kInvalidKeyRef)
+    {
+        UpdateKeyMaterial();
+    }
+#endif
+
+    return mMleKey;
 }
 
 const Mle::KeyMaterial &KeyManager::GetTemporaryMleKey(uint32_t aKeySequence)
@@ -683,7 +706,7 @@ void KeyManager::SetPskcRef(PskcRef aKeyRef)
     Get<Notifier>().Signal(kEventPskcChanged);
 
 exit:
-    mIsPskcSet = true;
+    return;
 }
 
 void KeyManager::SetNetworkKeyRef(otNetworkKeyRef aKeyRef)
@@ -703,6 +726,16 @@ exit:
     return;
 }
 
+void KeyManager::DestroyPersistentKeys(void)
+{
+    Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys();
+
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
+}
+
+#endif // OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+
 void KeyManager::DestroyTemporaryKeys(void)
 {
     mMleKey.Clear();
@@ -710,9 +743,5 @@ void KeyManager::DestroyTemporaryKeys(void)
     Get<Mac::SubMac>().ClearMacKeys();
     Get<Mac::Mac>().ClearMode2Key();
 }
-
-void KeyManager::DestroyPersistentKeys(void) { Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys(); }
-
-#endif // OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
 
 } // namespace ot

@@ -148,6 +148,25 @@ public:
      * @retval kErrorFailed   Failed to generate random sequence.
      */
     Error GenerateRandom(void) { return Random::Crypto::Fill(*this); }
+
+    /**
+     * Checks if the  Network Key is empty (all bytes are zero).
+     *
+     * @retval true   The key is empty.
+     * @retval false  The key is not empty.
+     */
+    bool IsEmpty(void)
+    {
+        for (uint8_t i = 0; i < kSize; i++)
+        {
+            if (m8[i] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 #endif
 
 } OT_TOOL_PACKED_END;
@@ -276,7 +295,14 @@ public:
      * @retval TRUE  if the PSKc is configured.
      * @retval FALSE if the PSKc is not not configured.
      */
-    bool IsPskcSet(void) const { return mIsPskcSet; }
+    bool IsPskcSet(void) const
+    {
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+        return (mPskcRef != Crypto::Storage::kInvalidKeyRef);
+#else
+        return mIsPskcSet;
+#endif
+    }
 
     /**
      * Gets the PKSc.
@@ -347,7 +373,7 @@ public:
      *
      * @returns The current MLE key.
      */
-    const Mle::KeyMaterial &GetCurrentMleKey(void) const { return mMleKey; }
+    const Mle::KeyMaterial &GetCurrentMleKey(void);
 
     /**
      * Returns a temporary MLE key Material computed from the given key sequence.
@@ -534,14 +560,14 @@ public:
      */
     void MacFrameCounterUsed(uint32_t aMacFrameCounter);
 
-#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     /**
-     * Destroys all the volatile mac keys stored in PSA ITS.
+     * Destroys all the volatile keys stored in the module and in the MAC.
      */
     void DestroyTemporaryKeys(void);
 
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     /**
-     * Destroys all the persistent keys stored in PSA ITS.
+     * Destroys all the persistent keys stored in the module.
      */
     void DestroyPersistentKeys(void);
 #endif
@@ -629,14 +655,17 @@ private:
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     PskcRef mPskcRef;
 #else
-    Pskc       mPskc;
+    Pskc mPskc;
 #endif
 
     KekKeyMaterial mKek;
     uint32_t       mKekFrameCounter;
 
     SecurityPolicy mSecurityPolicy;
-    bool           mIsPskcSet : 1;
+
+#if !OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    bool mIsPskcSet : 1;
+#endif
 };
 
 /**
