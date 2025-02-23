@@ -173,6 +173,7 @@ target_link_libraries(openthread-posix
         ot-config
         ot-posix-config
         mbedtls
+        openthread-native-its-file
         $<$<NOT:$<BOOL:${OT_ANDROID_NDK}>>:util>
         $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Linux>:rt>
 )

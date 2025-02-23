@@ -164,6 +164,10 @@
 #define OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE 1
 #endif
 
+#ifndef OPENTHREAD_CONFIG_PLATFORM_MAC_KEYS_EXPORTABLE_ENABLE
+#define OPENTHREAD_CONFIG_PLATFORM_MAC_KEYS_EXPORTABLE_ENABLE 1
+#endif
+
 #ifndef OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
 /**
  * The `system.cpp` has registered a state-changed callback handler. Another state-changed callback handler

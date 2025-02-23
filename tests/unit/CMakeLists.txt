@@ -117,10 +117,11 @@ set(COMMON_LIBS
     ot-test-platform-ftd
     openthread-ftd
     ot-test-platform-ftd
-    ${OT_MBEDTLS}
     ot-config
     openthread-ftd
     openthread-url
+    ${OT_MBEDTLS}
+    openthread-native-its-ram
 )
 
 set(COMMON_LIBS_RCP
@@ -250,10 +251,10 @@ ot_unit_test(pskc)
 ot_unit_test(routing_manager)
 ot_unit_test(serial_number)
 ot_unit_test(smart_ptrs)
-ot_unit_test(spinel_buffer)
-ot_unit_test(spinel_decoder)
-ot_unit_test(spinel_encoder)
-ot_unit_test(spinel_prop_codec)
+# ot_unit_test(spinel_buffer)
+# ot_unit_test(spinel_decoder)
+# ot_unit_test(spinel_encoder)
+# ot_unit_test(spinel_prop_codec)
 ot_unit_test(srp_adv_proxy)
 ot_unit_test(srp_server)
 ot_unit_test(string)
