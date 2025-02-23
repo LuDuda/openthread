@@ -179,17 +179,10 @@ KeyManager::KeyManager(Instance &aInstance)
     otPlatCryptoInit();
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    {
-        NetworkKey networkKey;
-
-        mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
-        mPskcRef       = Crypto::Storage::kInvalidKeyRef;
-
-        IgnoreError(networkKey.GenerateRandom());
-        StoreNetworkKey(networkKey, /* aOverWriteExisting */ false);
-    }
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
 #else
-    IgnoreError(mNetworkKey.GenerateRandom());
+    mNetworkKey.Clear();
     mPskc.Clear();
 #endif
 
@@ -200,6 +193,22 @@ void KeyManager::Start(void)
 {
     mKeySwitchGuardTimer = 0;
     ResetKeyRotationTimer();
+
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    NetworkKey networkKey;
+
+    // Generate random Network Key, if there is none currently.
+    if (mNetworkKeyRef == Crypto::Storage::kInvalidKeyRef)
+    {
+        IgnoreError(networkKey.GenerateRandom());
+        SetNetworkKey(networkKey);
+    }
+#else
+    if (mNetworkKey.IsEmpty())
+    {
+        mNetworkKey.GenerateRandom();
+    }
+#endif
 }
 
 void KeyManager::Stop(void) { mKeyRotationTimer.Stop(); }
@@ -345,6 +354,12 @@ void KeyManager::UpdateKeyMaterial(void)
 {
     HashKeys hashKeys;
 
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    VerifyOrExit(Crypto::Storage::IsKeyRefValid(mNetworkKeyRef));
+#else
+    VerifyOrExit(!mNetworkKey.IsEmpty());
+#endif
+
     ComputeKeys(mKeySequence, hashKeys);
 
     mMleKey.SetFrom(hashKeys.GetMleKey());
@@ -375,6 +390,9 @@ void KeyManager::UpdateKeyMaterial(void)
         mTrelKey.SetFrom(key);
     }
 #endif
+
+exit:
+    return;
 }
 
 void KeyManager::SetCurrentKeySequence(uint32_t aKeySequence, KeySeqUpdateFlags aFlags)
@@ -711,7 +729,13 @@ void KeyManager::DestroyTemporaryKeys(void)
     Get<Mac::Mac>().ClearMode2Key();
 }
 
-void KeyManager::DestroyPersistentKeys(void) { Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys(); }
+void KeyManager::DestroyPersistentKeys(void)
+{
+    Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys();
+
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
+}
 
 #endif // OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
 
