@@ -49,6 +49,8 @@ add_library(ot-fake-platform
 )
 target_link_libraries(ot-fake-platform
     ot-config
+    ${OT_MBEDTLS}
+    openthread-native-its-ram
 )
 
 add_library(ot-fake-ftd INTERFACE)

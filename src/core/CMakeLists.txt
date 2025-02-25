@@ -125,7 +125,8 @@ set(COMMON_SOURCES
     common/uptime.cpp
     crypto/aes_ccm.cpp
     crypto/aes_ecb.cpp
-    crypto/crypto_platform.cpp
+    crypto/crypto_platform_mbedtls.cpp
+    crypto/crypto_platform_psa.cpp
     crypto/hkdf_sha256.cpp
     crypto/hmac_sha256.cpp
     crypto/mbedtls.cpp
@@ -278,6 +279,7 @@ set(RADIO_COMMON_SOURCES
     common/binary_search.cpp
     common/error.cpp
     common/frame_builder.cpp
+    common/heap.cpp
     common/log.cpp
     common/random.cpp
     common/string.cpp
@@ -286,7 +288,9 @@ set(RADIO_COMMON_SOURCES
     common/uptime.cpp
     crypto/aes_ccm.cpp
     crypto/aes_ecb.cpp
-    crypto/crypto_platform.cpp
+    crypto/crypto_platform_mbedtls.cpp
+    crypto/crypto_platform_psa.cpp
+    crypto/mbedtls.cpp
     crypto/storage.cpp
     diags/factory_diags.cpp
     instance/instance.cpp
@@ -302,6 +306,7 @@ set(RADIO_COMMON_SOURCES
     radio/radio_callbacks.cpp
     radio/radio_platform.cpp
     thread/link_quality.cpp
+    utils/heap.cpp
     utils/parse_cmdline.cpp
     utils/power_calibration.cpp
 )

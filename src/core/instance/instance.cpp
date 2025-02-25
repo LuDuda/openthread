@@ -57,11 +57,12 @@ static uint64_t gMultiInstanceRaw[MULTI_INSTANCE_SIZE];
 
 #endif
 
-#if OPENTHREAD_MTD || OPENTHREAD_FTD
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 OT_DEFINE_ALIGNED_VAR(sHeapRaw, sizeof(Utils::Heap), uint64_t);
 Utils::Heap *Instance::sHeap{nullptr};
 #endif
+
+#if OPENTHREAD_MTD || OPENTHREAD_FTD
 #if OPENTHREAD_CONFIG_REFERENCE_DEVICE_ENABLE
 bool Instance::sDnsNameCompressionEnabled = true;
 #endif
@@ -279,6 +280,7 @@ Instance::Instance(void)
     , mIsInitialized(false)
     , mId(Random::NonCrypto::GetUint32())
 {
+#if OPENTHREAD_MTD || OPENTHREAD_FTD
 #if OPENTHREAD_CONFIG_MULTIPLE_INSTANCE_ENABLE && OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
 #if OPENTHREAD_CONFIG_MULTIPLE_STATIC_INSTANCE_ENABLE
     mCryptoStorageKeyRefManager.SetKeyRefExtraOffset(Crypto::Storage::KeyRefManager::kKeyRefExtraOffset * GetIdx(this));
@@ -287,9 +289,10 @@ Instance::Instance(void)
        "The `KeyRef` values will be shared across different `Instance` objects"
 #endif
 #endif
+#endif
 }
 
-#if (OPENTHREAD_MTD || OPENTHREAD_FTD) && !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 Utils::Heap &Instance::GetHeap(void)
 {
     if (nullptr == sHeap)

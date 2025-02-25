@@ -179,17 +179,10 @@ KeyManager::KeyManager(Instance &aInstance)
     otPlatCryptoInit();
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    {
-        NetworkKey networkKey;
-
-        mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
-        mPskcRef       = Crypto::Storage::kInvalidKeyRef;
-
-        IgnoreError(networkKey.GenerateRandom());
-        StoreNetworkKey(networkKey, /* aOverWriteExisting */ false);
-    }
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
 #else
-    IgnoreError(mNetworkKey.GenerateRandom());
+    mNetworkKey.Clear();
     mPskc.Clear();
 #endif
 
@@ -200,6 +193,22 @@ void KeyManager::Start(void)
 {
     mKeySwitchGuardTimer = 0;
     ResetKeyRotationTimer();
+
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    NetworkKey networkKey;
+
+    // Generate random Network Key, if there is none currently.
+    if (mNetworkKeyRef == Crypto::Storage::kInvalidKeyRef)
+    {
+        IgnoreError(networkKey.GenerateRandom());
+        SetNetworkKey(networkKey);
+    }
+#else
+    if (mNetworkKey.IsEmpty())
+    {
+        mNetworkKey.GenerateRandom();
+    }
+#endif
 }
 
 void KeyManager::Stop(void) { mKeyRotationTimer.Stop(); }
@@ -313,7 +322,18 @@ void KeyManager::ComputeTrelKey(uint32_t aKeySequence, Mac::Key &aKey) const
     Crypto::Key        cryptoKey;
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    cryptoKey.SetAsKeyRef(mNetworkKeyRef);
+    Crypto::Storage::KeyRef keyRef;
+    NetworkKey              networkKey;
+
+    GetNetworkKey(networkKey);
+
+    // Create temporary key to perform derive operation. This might be improved by using key copy operation,
+    // however NetworkKey is exported for the other cases.
+    SuccessOrAssert(Crypto::Storage::ImportKey(keyRef, Crypto::Storage::kKeyTypeDerive,
+                                               Crypto::Storage::kKeyAlgorithmHkdfSha256, Crypto::Storage::kUsageDerive,
+                                               Crypto::Storage::kTypeVolatile, networkKey.m8, NetworkKey::kSize));
+
+    cryptoKey.SetAsKeyRef(keyRef);
 #else
     cryptoKey.Set(mNetworkKey.m8, NetworkKey::kSize);
 #endif
@@ -323,12 +343,22 @@ void KeyManager::ComputeTrelKey(uint32_t aKeySequence, Mac::Key &aKey) const
 
     hkdf.Extract(salt, sizeof(salt), cryptoKey);
     hkdf.Expand(kTrelInfoString, sizeof(kTrelInfoString), aKey.m8, Mac::Key::kSize);
+
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    Crypto::Storage::DestroyKey(keyRef);
+#endif
 }
 #endif
 
 void KeyManager::UpdateKeyMaterial(void)
 {
     HashKeys hashKeys;
+
+#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+    VerifyOrExit(Crypto::Storage::IsKeyRefValid(mNetworkKeyRef));
+#else
+    VerifyOrExit(!mNetworkKey.IsEmpty());
+#endif
 
     ComputeKeys(mKeySequence, hashKeys);
 
@@ -360,6 +390,9 @@ void KeyManager::UpdateKeyMaterial(void)
         mTrelKey.SetFrom(key);
     }
 #endif
+
+exit:
+    return;
 }
 
 void KeyManager::SetCurrentKeySequence(uint32_t aKeySequence, KeySeqUpdateFlags aFlags)
@@ -696,7 +729,13 @@ void KeyManager::DestroyTemporaryKeys(void)
     Get<Mac::Mac>().ClearMode2Key();
 }
 
-void KeyManager::DestroyPersistentKeys(void) { Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys(); }
+void KeyManager::DestroyPersistentKeys(void)
+{
+    Get<Crypto::Storage::KeyRefManager>().DestroyPersistentKeys();
+
+    mNetworkKeyRef = Crypto::Storage::kInvalidKeyRef;
+    mPskcRef       = Crypto::Storage::kInvalidKeyRef;
+}
 
 #endif // OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
 

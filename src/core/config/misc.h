@@ -44,6 +44,7 @@
  */
 
 #include "config/coap.h"
+#include "config/crypto.h"
 #include "config/srp_server.h"
 
 /**
@@ -314,6 +315,22 @@
  */
 #ifndef OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
 #define OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE 0
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
+ *
+ * Enable the internal heap.
+ *
+ * This configuration is automatically enabled by default when an external heap is disabled.
+ * It is applicable for FTD and MTD builds. Additionally, if PSA library is used, it requires
+ * heap memory also for Radio build.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
+#define OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE  \
+    (!OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE && \
+     (OPENTHREAD_MTD || OPENTHREAD_FTD || (OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA)))
 #endif
 
 /**

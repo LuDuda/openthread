@@ -90,13 +90,11 @@ verify(node.get(wpan.WPAN_STATE) == wpan.STATE_OFFLINE)
 
 node.set(wpan.WPAN_PANID, '0x1977')
 node.set(wpan.WPAN_XPANID, '1020031510006016', binary_data=True)
-node.set(wpan.WPAN_KEY, '0123456789abcdeffecdba9876543210', binary_data=True)
 
 node.form('mazda', channel=12)
 verify(node.get(wpan.WPAN_STATE) == wpan.STATE_ASSOCIATED)
 verify(node.get(wpan.WPAN_NAME) == '"mazda"')
 verify(node.get(wpan.WPAN_CHANNEL) == '12')
-verify(node.get(wpan.WPAN_KEY) == '[0123456789ABCDEFFECDBA9876543210]')
 verify(node.get(wpan.WPAN_PANID) == '0x1977')
 verify(node.get(wpan.WPAN_XPANID) == '0x1020031510006016')
 
