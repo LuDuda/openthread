@@ -33,7 +33,7 @@
 
 #include "heap.hpp"
 
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
 
 #include <string.h>
 
@@ -219,4 +219,4 @@ void Heap::Free(void *aPointer)
 } // namespace Utils
 } // namespace ot
 
-#endif // !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#endif // OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE

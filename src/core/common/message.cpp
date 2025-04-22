@@ -156,7 +156,7 @@ uint16_t MessagePool::GetFreeBufferCount(void) const
     uint16_t rval;
 
 #if OPENTHREAD_CONFIG_MESSAGE_USE_HEAP_ENABLE
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
     rval = static_cast<uint16_t>(Instance::GetHeap().GetFreeSize() / sizeof(Buffer));
 #else
     rval = NumericLimits<uint16_t>::kMax;
@@ -175,7 +175,7 @@ uint16_t MessagePool::GetTotalBufferCount(void) const
     uint16_t rval;
 
 #if OPENTHREAD_CONFIG_MESSAGE_USE_HEAP_ENABLE
-#if !OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
+#if OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
     rval = static_cast<uint16_t>(Instance::GetHeap().GetCapacity() / sizeof(Buffer));
 #else
     rval = NumericLimits<uint16_t>::kMax;

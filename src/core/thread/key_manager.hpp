@@ -148,6 +148,25 @@ public:
      * @retval kErrorFailed   Failed to generate random sequence.
      */
     Error GenerateRandom(void) { return Random::Crypto::Fill(*this); }
+
+    /**
+     * Checks if the  Network Key is empty (all bytes are zero).
+     *
+     * @retval true   The key is empty.
+     * @retval false  The key is not empty.
+     */
+    bool IsEmpty(void)
+    {
+        for (uint8_t i = 0; i < kSize; i++)
+        {
+            if (m8[i] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 #endif
 
 } OT_TOOL_PACKED_END;

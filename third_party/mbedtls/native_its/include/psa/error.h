@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021, The OpenThread Authors.
+ *  Copyright (c) 2024, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file
- *   This file implements the `Heap` API.
- */
+#ifndef PSA_ERROR_H__
+#define PSA_ERROR_H__
 
-#include "heap.hpp"
+#include <stdint.h>
 
-#include "instance/instance.hpp"
+typedef int32_t psa_status_t;
 
-namespace ot {
-namespace Heap {
+#define PSA_SUCCESS                    ((psa_status_t)0)
+#define PSA_ERROR_GENERIC_ERROR        ((psa_status_t)-132)
+#define PSA_ERROR_NOT_PERMITTED        ((psa_status_t)-133)
+#define PSA_ERROR_NOT_SUPPORTED        ((psa_status_t)-134)
+#define PSA_ERROR_INVALID_ARGUMENT     ((psa_status_t)-135)
+#define PSA_ERROR_ALREADY_EXISTS       ((psa_status_t)-139)
+#define PSA_ERROR_DOES_NOT_EXIST       ((psa_status_t)-140)
+#define PSA_ERROR_INSUFFICIENT_STORAGE ((psa_status_t)-142)
+#define PSA_ERROR_STORAGE_FAILURE      ((psa_status_t)-146)
+#define PSA_ERROR_INVALID_SIGNATURE    ((psa_status_t)-149)
+#define PSA_ERROR_DATA_CORRUPT         ((psa_status_t)-152)
 
-#if OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
-
-void *CAlloc(size_t aCount, size_t aSize) { return otPlatCAlloc(aCount, aSize); }
-
-void Free(void *aPointer) { otPlatFree(aPointer); }
-
-#elif OPENTHREAD_CONFIG_HEAP_INTERNAL_ENABLE
-
-void *CAlloc(size_t aCount, size_t aSize) { return Instance::GetHeap().CAlloc(aCount, aSize); }
-
-void Free(void *aPointer) { Instance::GetHeap().Free(aPointer); }
-
-#endif // OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
-
-} // namespace Heap
-} // namespace ot
+#endif /* PSA_ERROR_H__ */
