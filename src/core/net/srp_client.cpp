@@ -391,11 +391,6 @@ Client::Client(Instance &aInstance)
     };
 
     mHostInfo.Init();
-
-#if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    KeyInfo keyInfo(Get<Crypto::Storage::KeyRefManager>().KeyRefFor(Crypto::Storage::KeyRefManager::kEcdsa));
-    IgnoreError(ReadOrGenerateKey(keyInfo));
-#endif
 }
 
 Error Client::Start(const Ip6::SockAddr &aServerSockAddr, Requester aRequester)
@@ -1116,9 +1111,9 @@ Error Client::PrepareUpdateMessage(MsgInfo &aInfo)
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
     aInfo.mKeyInfo.SetKeyRef(Get<Crypto::Storage::KeyRefManager>().KeyRefFor(Crypto::Storage::KeyRefManager::kEcdsa));
-#else
-    SuccessOrExit(error = ReadOrGenerateKey(aInfo.mKeyInfo));
 #endif
+
+    SuccessOrExit(error = ReadOrGenerateKey(aInfo.mKeyInfo));
 
     header.SetMessageId(mNextMessageId);
 
