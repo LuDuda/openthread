@@ -44,6 +44,8 @@
 // Cryptographic configuration
 // ==============================================================================
 
+#if OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_MBEDTLS
+
 #define MBEDTLS_AES_C
 #if (MBEDTLS_VERSION_NUMBER >= 0x03050000)
 #define MBEDTLS_AES_ONLY_128_BIT_KEY_LENGTH
@@ -86,6 +88,18 @@
 #if OPENTHREAD_CONFIG_DETERMINISTIC_ECDSA_ENABLE
 #define MBEDTLS_ECDSA_DETERMINISTIC
 #endif
+#endif
+
+#elif OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA
+
+#define MBEDTLS_USE_PSA_CRYPTO
+
+#define MBEDTLS_PSA_CRYPTO_C
+#define MBEDTLS_PSA_CRYPTO_CLIENT
+#define MBEDTLS_PSA_CRYPTO_STORAGE_C
+#define MBEDTLS_PSA_CRYPTO_CONFIG
+#define MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
+
 #endif
 
 // ==============================================================================
