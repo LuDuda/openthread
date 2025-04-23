@@ -58,6 +58,10 @@ using namespace Crypto;
 
 #if OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA
 
+#if !OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
+#error "OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE is required for OPENTHREAD_CONFIG_CRYPTO_LIB_PSA."
+#endif
+
 //---------------------------------------------------------------------------------------------------------------------
 // Default/weak implementation of crypto platform APIs
 
