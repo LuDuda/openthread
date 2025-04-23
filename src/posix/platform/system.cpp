@@ -52,6 +52,7 @@
 
 #include "common/code_utils.hpp"
 #include "common/debug.hpp"
+#include "common/encoding.hpp"
 #include "posix/platform/daemon.hpp"
 #include "posix/platform/firewall.hpp"
 #include "posix/platform/infra_if.hpp"
@@ -63,6 +64,11 @@
 
 otInstance *gInstance = nullptr;
 bool        gDryRun   = false;
+
+#if OPENTHREAD_PSA_CRYPTO_NATIVE_ITS_FILE && (OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA)
+static char        sNativeItsFileNamePrefix[256];
+extern const char *gItsFileNamePrefix;
+#endif
 
 CoprocessorType sCoprocessorType = OT_COPROCESSOR_UNKNOWN;
 
@@ -206,6 +212,17 @@ void platformInit(otPlatformConfig *aPlatformConfig)
         exit(OT_EXIT_FAILURE);
         break;
     }
+
+#if OPENTHREAD_PSA_CRYPTO_NATIVE_ITS_FILE && (OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA)
+    uint64_t nodeId;
+
+    otPlatRadioGetIeeeEui64(gInstance, reinterpret_cast<uint8_t *>(&nodeId));
+    nodeId = ot::BigEndian::HostSwap64(nodeId);
+
+    snprintf(sNativeItsFileNamePrefix, sizeof(sNativeItsFileNamePrefix), "%s/%s_%" PRIx64 "_",
+             OPENTHREAD_CONFIG_POSIX_SETTINGS_PATH, getenv("PORT_OFFSET") ? getenv("PORT_OFFSET") : "0", nodeId);
+    gItsFileNamePrefix = sNativeItsFileNamePrefix;
+#endif
 
     aPlatformConfig->mCoprocessorType = sCoprocessorType;
 }
