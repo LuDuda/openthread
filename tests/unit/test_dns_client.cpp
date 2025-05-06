@@ -135,6 +135,9 @@ void otPlatFree(void *aPtr)
 
     free(aPtr);
 }
+
+void *otPlatCryptoCAlloc(size_t aNum, size_t aSize) { return calloc(aNum, aSize); }
+void  otPlatCryptoFree(void *aPtr) { free(aPtr); }
 #endif
 
 #if OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
@@ -1384,11 +1387,6 @@ void TestDnsClient(void)
 
     srpServer->SetEnabled(false);
     AdvanceTime(100);
-
-#if (OPENTHREAD_CONFIG_CRYPTO_LIB == OPENTHREAD_CONFIG_CRYPTO_LIB_PSA) && OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
-    // On a first attempt, SRP Client generates the SRP Key which adds additional heap allocation.
-    heapAllocations += 1;
-#endif
 
     VerifyOrQuit(heapAllocations == sHeapAllocatedPtrs.GetLength());
 
