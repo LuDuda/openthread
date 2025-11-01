@@ -311,16 +311,7 @@ void KeyManager::ComputeTrelKey(uint32_t aKeySequence, Mac::Key &aKey) const
     Crypto::Key        cryptoKey;
 
 #if OPENTHREAD_CONFIG_PLATFORM_KEY_REFERENCES_ENABLE
-    Crypto::Storage::KeyRef keyRef;
-    NetworkKey              networkKey;
-
-    GetNetworkKey(networkKey);
-
-    // Create temporary key to perform derive operation.
-    SuccessOrAssert(Crypto::Storage::ImportKey(keyRef, Crypto::Storage::kKeyTypeDerive,
-                                               Crypto::Storage::kKeyAlgorithmHkdfSha256, Crypto::Storage::kUsageDerive,
-                                               Crypto::Storage::kTypeVolatile, networkKey.m8, NetworkKey::kSize));
-
+    keyRef = Get<Crypto::Storage::KeyRefManager>().KeyRefFor(Crypto::Storage::KeyRefManager::kNetworkKey);
     cryptoKey.SetAsKeyRef(keyRef);
 #else
     cryptoKey.Set(mNetworkKey.m8, NetworkKey::kSize);
