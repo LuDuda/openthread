@@ -435,6 +435,7 @@ void Instance::AfterInit(void)
 #if OPENTHREAD_MTD || OPENTHREAD_FTD
 
     Get<KeyManager>().Init();
+    Get<Mac::Mac>().Init();
 
     // Restore datasets and network information
 
